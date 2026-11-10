@@ -1,7 +1,7 @@
 -- Pandoc filter applied to the document body before it is handed to Typst.
 --   * Shifts headings so the shallowest one is level 1. Notes that start at "##"
 --     would otherwise get section numbers like "0.1".
---   * Rewrites relative image paths to project-root paths (see render.py).
+--   * Rewrites relative image paths to project-root paths (see pdf.py).
 
 local function is_remote(src)
   return src:match("^%a[%w+.-]*:") ~= nil

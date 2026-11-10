@@ -1,17 +1,27 @@
 # publish-editor
 
-A local editor for the Markdown docs under `thea/`, with viz blocks: a fenced
-block whose info string is `thea` holds the spec of an interactive
-visualization. The local [claude CLI](https://claude.com/claude-code) generates
-it as a small TypeScript project, built into one offline HTML file, which the
-preview shows live. Ported and trimmed from dsl's thea blocks.
+Two things in one process:
+
+- In the background, every `.md` in the repo whose frontmatter `target` has
+  `pdf` is rendered to a PDF next to it, on startup if it's out of date and
+  whenever it changes (see [PDF](#pdf)).
+- A local editor for the Markdown docs under `thea/`, with viz blocks: a fenced
+  block whose info string is `thea` holds the spec of an interactive
+  visualization. The local [claude CLI](https://claude.com/claude-code)
+  generates it as a small TypeScript project, built into one offline HTML file,
+  which the preview shows live. Ported and trimmed from dsl's thea blocks.
 
 ```sh
 just chromium        # once: the headless Chromium for checks and thumbnails
-just editor          # http://127.0.0.1:8767
+just editor          # http://127.0.0.1:8767, and PDFs in the background
 just editor --model sonnet --budget-usd 1 --timeout-min 15
+just editor --no-watch   # no PDFs
+just editor --force-pdf  # re-render every PDF first (e.g. after editing a template)
 just editor-dev      # frontend with hot reload on :5173
 just editor-check    # lint, typecheck, build, test
+just pdf             # only the PDFs: catch up, then watch
+just pdf --once      # catch up, then exit (--force: re-render everything)
+just pdf ~/notes     # watch a different folder
 ```
 
 The CLI command is `claude`, or `$THEA_CLI`. The server listens on localhost
@@ -101,3 +111,60 @@ without network. The iframe is as high as the page reports (the bridge in
 `frontend/src/views/registry.ts` maps a repo path (the location hash,
 `#thea/<doc>`) to a view. A bespoke view for another folder is a component plus
 a line there.
+
+## PDF
+
+`watch.py` watches the repo (hidden folders, `node_modules` and thea's `viz/`
+skipped). `pdf.py` renders a doc with pandoc (Markdown to Typst markup) and
+Typst (PDF); both install through uv. The editor runs this on a thread of its
+own, so it never waits on viz generation, and `just pdf` runs it alone. If a
+render fails, the error is logged and the previous PDF stays in place.
+`GET /api/status` lists each render since startup under `pdf`.
+
+### Frontmatter
+
+```yaml
+---
+target: web, pdf          # or just `pdf`, or a YAML list
+template: scientific      # file name in pdf-templates/; default: `default`
+title: My *Paper*         # default: a leading `# H1` in the body
+---
+```
+
+Every template accepts:
+
+| Key | Meaning | Example |
+| --- | --- | --- |
+| `title`, `subtitle`, `abstract` | may contain inline Markdown | |
+| `author` / `authors` | string, or list of strings or `{name, affiliation, email}` | |
+| `date` | shown as written | `2026-11-09` |
+| `keywords` | list or comma-separated | `a, b` |
+| `lang` | hyphenation and localized labels | `de` |
+| `papersize` | Typst paper name | `us-letter` |
+| `margin` | any Typst length | `2.5cm` |
+| `font` | body font | `Noto Serif` |
+| `fontsize` | number in pt, or a length | `11` |
+| `numbering` | section numbering pattern, or `false` | `1.a` |
+| `toc` | table of contents | `true` |
+| `bibliography` | `.bib` file(s), relative to the note; enables `[@key]` | `refs.bib` |
+| `csl` | Typst style name or a `.csl` file | `apa` |
+
+`default` also takes `heading-font` and `accent` (a hex colour). `scientific` also takes
+`columns` (`2` for a two-column paper).
+
+Images and bibliographies must be inside the watched folder.
+
+### Adding a template
+
+Create `pdf-templates/<name>.typ` defining the function below, then set `template: <name>`.
+All frontmatter is available in `meta`, so new options need no Python changes.
+Helpers from `pdf-templates/_base.typ` are in scope. `pdf-templates/normalize.lua` is the
+pandoc filter applied to every body (heading levels, image paths).
+
+```typst
+#let template(body, meta: (:), title: none, subtitle: none, abstract: none) = {
+  set text(size: to-length(meta.at("fontsize", default: 11)))
+  title
+  body
+}
+```

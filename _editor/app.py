@@ -1,12 +1,15 @@
-"""The editor: the docs under `thea/`, their viz blocks, and the frontend."""
+"""The editor: the docs under `thea/`, their viz blocks, and the frontend; in
+the background, PDFs of the repo's Markdown (watch.py)."""
 
 import argparse
+import logging
 import os
 from pathlib import Path
 
 from flask import Flask, abort, jsonify, request, send_file, send_from_directory
 
 import generate
+import watch
 from generate import ROOT, Busy, Invalid, Unavailable, doc_dir, doc_file, doc_files, viz_dir
 from thea import BUILT, CSP, MAX_FILE_BYTES, THUMB
 
@@ -130,7 +133,7 @@ def delete_file(doc, name):
 
 
 @app.get("/api/status")
-def status(): return jsonify(generate.status())
+def status(): return jsonify(generate.status() | {"pdf": watch.results()})
 
 
 @app.get("/api/jobs")
@@ -187,8 +190,14 @@ def main() -> None:
     parser.add_argument("--budget-usd", type=float, default=2.0,
                         help="cap per run in the CLI's estimated USD at API prices; 0 for none")
     parser.add_argument("--timeout-min", type=int, default=20, help="time limit per run")
+    parser.add_argument("--no-watch", action="store_true", help="don't render PDFs in the background")
+    parser.add_argument("--force-pdf", action="store_true", help="on startup, re-render even up-to-date PDFs")
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO, format=watch.LOG_FORMAT, datefmt="%H:%M:%S")
+    # in debug mode, the reloader runs this in a parent and a child process: watch in the child only
+    if not args.no_watch and (not args.debug or os.environ.get("WERKZEUG_RUN_MAIN") == "true"):
+        watch.start(force=args.force_pdf)
     generate.settings.update(model=args.model, budget_usd=args.budget_usd or None, timeout_min=args.timeout_min)
     # localhost only: generating runs code as you
     app.run(host="127.0.0.1", port=args.port, debug=args.debug, threaded=True)

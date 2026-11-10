@@ -1,7 +1,7 @@
 dir := justfile_directory()
 editor_dir := dir / "_editor"
 
-# the editor for thea/ on http://127.0.0.1:8767 (builds the frontend first if needed)
+# the editor for thea/ on http://127.0.0.1:8767, rendering PDFs in the background (builds the frontend first if needed)
 editor *args:
     [ -f {{editor_dir}}/frontend/dist/index.html ] || just editor-build
     uv run --project {{editor_dir}} python {{editor_dir}}/app.py {{args}}
@@ -12,6 +12,10 @@ editor-dev:
     trap 'kill 0' EXIT
     uv run --project {{editor_dir}} python {{editor_dir}}/app.py --debug &
     npm --prefix {{editor_dir}}/frontend run dev
+
+# render Markdown with `target: pdf` to PDF without the editor: catch up, then watch (--once, --force, a folder)
+pdf *args:
+    uv run --project {{editor_dir}} python {{editor_dir}}/pdf.py {{args}}
 
 editor-build:
     npm --prefix {{editor_dir}}/frontend ci

@@ -1,11 +1,15 @@
 """Render a Markdown file with `target: pdf` frontmatter to a PDF next to it.
 
 Pipeline: frontmatter -> pandoc (Markdown to Typst markup) -> Typst (PDF).
+The editor runs this in the background (watch.py); `python pdf.py` runs it alone.
 """
 
+import argparse
 import json
+import logging
 import os
 import re
+from functools import cache
 from pathlib import Path
 
 import frontmatter
@@ -13,13 +17,18 @@ import pypandoc
 import typst
 
 HERE = Path(__file__).parent
-TEMPLATES = HERE / "templates"
-NORMALIZE_FILTER = HERE / "normalize.lua"
+TEMPLATES = HERE / "pdf-templates"
+NORMALIZE_FILTER = TEMPLATES / "normalize.lua"
 DEFAULT_TEMPLATE = "default"
 
 LEADING_H1 = re.compile(r"\A\s*#[ \t]+(.+?)[ \t]*#*[ \t]*(?:\n|\Z)")
 
-_fonts = typst.Fonts()  # scanning system fonts is slow, so do it once
+
+@cache
+def _fonts() -> typst.Fonts:
+    """Scanning system fonts is slow, so it's done once, on the first render."""
+    return typst.Fonts()
+
 
 
 class RenderError(Exception):
@@ -109,7 +118,7 @@ def _compile(source: Path, root: Path, meta: dict, body: str) -> bytes:
         return typst.compile(
             typst_source.encode(),
             root=root,
-            font_paths=_fonts,
+            font_paths=_fonts(),
             # default=str: YAML turns bare dates into date objects
             sys_inputs={"meta": json.dumps(meta, default=str)},
         )
@@ -180,3 +189,28 @@ def _pandoc(text: str, input_format: str, filters=None, extra_args=()) -> str:
         filters=filters,
         extra_args=["--wrap=none", *extra_args],
     )
+
+
+def main() -> None:
+    import watch  # watch imports this module
+
+    parser = argparse.ArgumentParser(description="Render every Markdown file with `target: pdf` to PDF, then watch.")
+    parser.add_argument("root", nargs="?", type=Path, default=watch.REPO,
+                        help="folder to watch (default: the repo)")
+    parser.add_argument("--once", action="store_true", help="render what is out of date, then exit")
+    parser.add_argument("--force", action="store_true", help="on startup, re-render even up-to-date PDFs")
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO, format=watch.LOG_FORMAT, datefmt="%H:%M:%S")
+
+    root = args.root.resolve()
+    if args.once:
+        watch.render_all(root, force=args.force)
+        return
+    try:
+        watch.watch(root, force=args.force)
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    main()
