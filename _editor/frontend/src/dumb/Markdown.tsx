@@ -10,12 +10,14 @@ type Props = {
   className?: string;
   /** fenced code blocks rendered by the caller instead, by the first word of their info string */
   fences?: Record<string, FenceRenderer>;
+  /** what relative image paths resolve against */
+  base?: string;
 };
 
 /** Markdown as HTML, with the caller's components in place of some fences. */
-export function Markdown({ source, className = '', fences }: Props) {
+export function Markdown({ source, className = '', fences, base = '' }: Props) {
   const kinds = useMemo(() => Object.keys(fences ?? {}), [fences]);
-  const html = useMemo(() => slotted(source, kinds), [source, kinds]);
+  const html = useMemo(() => slotted(source, kinds, base), [source, kinds, base]);
   const box = useRef<HTMLDivElement>(null);
   const [slots, setSlots] = useState<HTMLElement[]>([]);
   // the slots of this html: new elements whenever it changes

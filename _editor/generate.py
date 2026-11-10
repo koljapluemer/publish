@@ -29,11 +29,15 @@ SYSTEM_PROMPT = HERE / "system-prompt.md"
 CHECK = HERE / "check.py"
 CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", Path.home() / ".cache")) / "publish-thea"
 # bump when the template, prompt or pipeline changes in a way worth recording
-GENERATOR = "publish-thea-1"
+GENERATOR = "publish-thea-2"
 
 BUILT, THUMB, META = thea.BUILT, thea.THUMB, thea.META
 # workspace entries that aren't sources
-_SCRATCH = {"node_modules", "dist", "SPEC.md", "PREVIOUS_ERRORS.md", ".claude"}
+_SCRATCH = {"node_modules", "dist", "SPEC.md", "PREVIOUS_ERRORS.md", ".claude", "files", "FILES.md"}
+# where the doc's files are in the workspace, and what describes them
+FILES, FILES_MD = "files", "FILES.md"
+# what FILES.md shows of a text file
+PREVIEW_LINES, PREVIEW_CHARS = 6, 300
 MAX_SOURCE_BYTES = 20 * 1024 * 1024
 SHOT_WIDTH, THUMB_WIDTH = 800, 420
 # the thumbnail is cut to at most this height per width
@@ -93,6 +97,22 @@ def viz_dir(doc: str, name: str) -> Path:
     if not isinstance(name, str) or not thea.NAME.match(name):
         raise Invalid(f"invalid viz name '{name}'")
     return doc_dir(doc) / "viz" / name
+
+
+def doc_file(doc: str, name: str) -> Path:
+    if not thea.is_file_name(name):
+        raise Invalid(f"invalid file name '{name}': letters, digits, . _ - and one of the types "
+                      + ", ".join(sorted(thea.FILE_TYPES)))
+    return doc_dir(doc) / name
+
+
+def doc_files(doc: str) -> list[Path]:
+    """The doc's files, by name."""
+    folder = doc_dir(doc)
+    if not folder.is_dir():
+        return []
+    return sorted((p for p in folder.iterdir()
+                   if thea.is_file_name(p.name) and p.is_file() and not p.is_symlink()), key=lambda p: p.name)
 
 
 @cache
@@ -197,6 +217,7 @@ def _run(job: Job, spec: str, problems: list[str]) -> None:
     job.step = "Preparing the workspace"
     ws = _workspace(f"{job.doc}/{job.name}", dest if previous else TEMPLATE)
     (ws / "SPEC.md").write_text(spec + "\n", encoding="utf-8")
+    files = _copy_files(doc_files(job.doc), ws)
     if problems:
         (ws / "PREVIOUS_ERRORS.md").write_text(
             "Problems with the previous version or attempt:\n\n" + "\n\n".join(f"- {p}" for p in problems) + "\n",
@@ -209,6 +230,7 @@ def _run(job: Job, spec: str, problems: list[str]) -> None:
 
     session = str(uuid.uuid4())
     prompt = ("Build the visualization SPEC.md describes" + (", starting from the previous version in the workspace" if previous else "")
+              + (f". The doc's files are in {FILES}/, described in {FILES_MD}" if files else "")
               + (". PREVIOUS_ERRORS.md lists problems to fix" if problems else "") + ".")
     result = _claude(job, ["--session-id", session], prompt, ws, env, deadline)
     if failure := _gate(job, ws, env, deadline):
@@ -236,7 +258,57 @@ def _workspace(key: str, seed: Path) -> Path:
         if p.name in _SCRATCH or p.name in (BUILT, THUMB, META):
             continue
         (shutil.copytree if p.is_dir() else shutil.copy2)(p, ws / p.name)
+    # the bridge the app relies on: a previous version gets the current one
+    shutil.copy2(TEMPLATE / "build.mjs", ws / "build.mjs")
     return ws
+
+
+def _copy_files(files: list[Path], ws: Path) -> list[Path]:
+    """Copies the doc's `files` into the workspace, read-only, with FILES_MD describing them; the copies."""
+    if not files:
+        return []
+    folder = ws / FILES
+    folder.mkdir()
+    out = []
+    for p in files:
+        target = folder / p.name
+        shutil.copyfile(p, target)
+        target.chmod(0o444)
+        out.append(target)
+    (ws / FILES_MD).write_text(files_md(out), encoding="utf-8")
+    return out
+
+
+def files_md(files: list[Path]) -> str:
+    """What the CLI is told of the doc's files: each one's size and a glimpse of its content."""
+    out = [f"# The doc's files\n\nRead-only copies in {FILES}/; import them as `../{FILES}/<name>` from src/.\n"]
+    for p in files:
+        size = p.stat().st_size
+        out.append(f"## {p.name}\n\n{size:,} bytes")
+        ext = p.suffix[1:].lower()
+        try:
+            if ext in ("csv", "tsv", "txt", "md", "svg"):
+                text = p.read_text(encoding="utf-8", errors="replace")
+                lines = text.splitlines()
+                shown = lines[:PREVIEW_LINES] if ext != "svg" else [text[:PREVIEW_CHARS]]
+                out[-1] += f", {len(lines):,} lines. Start:\n\n```\n" + "\n".join(
+                    l[:PREVIEW_CHARS] for l in shown) + "\n```"
+            elif ext in ("json", "geojson"):
+                out[-1] += ". " + _json_shape(json.loads(p.read_text(encoding="utf-8")))
+        except (OSError, ValueError) as e:
+            out[-1] += f". Can't be read as {ext}: {e}"
+        out[-1] += "\n"
+    return "\n".join(out)
+
+
+def _json_shape(value) -> str:
+    if isinstance(value, dict):
+        keys = list(value)
+        return f"An object with {len(keys)} keys: " + ", ".join(keys[:30]) + (", …" if len(keys) > 30 else "")
+    if isinstance(value, list):
+        first = f"; the first item: {json.dumps(value[0])[:PREVIEW_CHARS]}" if value else ""
+        return f"An array of {len(value):,} items{first}"
+    return f"A {type(value).__name__}: {json.dumps(value)[:PREVIEW_CHARS]}"
 
 
 def _remaining(deadline: float) -> float:

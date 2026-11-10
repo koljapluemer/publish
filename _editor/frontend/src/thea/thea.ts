@@ -9,8 +9,9 @@ const NAME = /^[a-z]+-[a-z]+$/;
 export type TheaBlock = {
   /** its place among the doc's viz blocks */
   index: number;
-  /** the line of its opening fence */
+  /** the lines of its opening and closing fence */
   line: number;
+  end: number;
   /** its identity (the folder of its build), given on its first generation; null until then */
   name: string | null;
   spec: string;
@@ -27,7 +28,7 @@ export function theaBlocks(text: string): TheaBlock[] {
     const m = HEADER.exec(lines[i]);
     if (m) {
       const name = m[2] && NAME.test(m[2]) ? m[2] : null;
-      out.push({ index: out.length, line: i, name, spec: lines.slice(i + 1, end).join('\n').trim() });
+      out.push({ index: out.length, line: i, end, name, spec: lines.slice(i + 1, end).join('\n').trim() });
     }
     i = end + 1;
   }

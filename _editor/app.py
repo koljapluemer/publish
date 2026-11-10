@@ -7,8 +7,8 @@ from pathlib import Path
 from flask import Flask, abort, jsonify, request, send_file, send_from_directory
 
 import generate
-from generate import ROOT, Busy, Invalid, Unavailable, doc_dir, viz_dir
-from thea import BUILT, CSP, THUMB
+from generate import ROOT, Busy, Invalid, Unavailable, doc_dir, doc_file, doc_files, viz_dir
+from thea import BUILT, CSP, MAX_FILE_BYTES, THUMB
 
 HERE = Path(__file__).parent
 DIST = Path(os.environ.get("EDITOR_FRONTEND_DIST", HERE / "frontend" / "dist"))
@@ -17,7 +17,11 @@ PORT = 8767
 VIEW_CSP = "sandbox allow-scripts; " + CSP
 NEW_DOC = "# {title}\n\nSome prose.\n\n```thea\nDescribe the visualization.\n```\n"
 
+# a doc's file opened directly (an SVG, say) runs no script
+FILE_CSP = "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:"
+
 app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 4 * MAX_FILE_BYTES
 
 
 @app.errorhandler(Invalid)
@@ -71,6 +75,58 @@ def write_doc(doc):
     tmp.write_text(text, encoding="utf-8")
     tmp.replace(path)
     return jsonify(text=text)
+
+
+def _file_list(doc: str) -> list[dict]:
+    return [{"name": p.name, "size": p.stat().st_size} for p in doc_files(doc)]
+
+
+@app.get("/api/docs/<doc>/files")
+def list_files(doc):
+    _index(doc)
+    return jsonify(_file_list(doc))
+
+
+@app.post("/api/docs/<doc>/files")
+def upload_files(doc):
+    _index(doc)
+    uploads = request.files.getlist("file")
+    if not uploads:
+        raise Invalid("no file sent")
+    checked = []
+    for upload in uploads:
+        path = doc_file(doc, upload.filename or "")
+        data = upload.read()
+        if len(data) > MAX_FILE_BYTES:
+            raise Invalid(f"{path.name} is larger than {MAX_FILE_BYTES // 1024 // 1024} MB")
+        checked.append((path, data))
+    for path, data in checked:
+        tmp = path.with_name(f".{path.name}.tmp")
+        tmp.write_bytes(data)
+        tmp.replace(path)
+    return jsonify(_file_list(doc)), 201
+
+
+def _existing_file(doc: str, name: str) -> Path:
+    _index(doc)
+    path = doc_file(doc, name)
+    if not path.is_file() or path.is_symlink():
+        abort(404)
+    return path
+
+
+@app.get("/api/docs/<doc>/files/<name>")
+def read_file(doc, name):
+    response = send_file(_existing_file(doc, name), conditional=True, max_age=0)
+    response.headers["Content-Security-Policy"] = FILE_CSP
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@app.delete("/api/docs/<doc>/files/<name>")
+def delete_file(doc, name):
+    _existing_file(doc, name).unlink()
+    return jsonify(_file_list(doc))
 
 
 @app.get("/api/status")

@@ -21,6 +21,7 @@ only: generating runs code as you.
 
 ```
 thea/<doc>/index.md            the doc
+thea/<doc>/rain.csv …          its files (data, images, fonts), flat next to it
 thea/<doc>/viz/<name>/         one viz, generated, committed
   src/ package.json …          its sources
   index.html                   the built page
@@ -46,13 +47,29 @@ first. A block whose spec differs from `meta.json`'s says "spec changed". A
 rebuild replaces `viz/<name>/`, and git is the version history. A viz whose
 block was removed or renamed stays on disk until you delete it.
 
+## Files
+
+A doc's files sit next to its `index.md`: CSV, TSV, JSON, GeoJSON, text,
+Markdown, images and fonts, at most 2 MB each, named with letters, digits,
+`.`, `_` and `-`. Drop or paste them into the editor, or use the Files menu. A
+reference goes in where they land: the bare name inside a viz spec, `![](name)`
+for an image in the prose. The preview shows those images.
+
+A spec names a file by its bare name ("monthly rainfall from rain.csv").
+Generating copies the doc's files into the workspace's `files/`, read-only,
+with `FILES.md` describing each (size, first lines or JSON shape). The viz
+imports what it uses (`../files/rain.csv`) and the build inlines it. The files
+are never copied into `viz/<name>/`. After changing a file, regenerate the
+vizzes that use it.
+
 ## Generating
 
 One background thread runs the jobs, one at a time (`generate.py`):
 
 1. The workspace `~/.cache/publish-thea/<doc>/<name>/` gets the viz's current
    sources, or `template/` for a first run (its `node_modules` stays between
-   runs). `SPEC.md` holds the spec, and `PREVIOUS_ERRORS.md` holds the runtime
+   runs), with the template's current `build.mjs`. `SPEC.md` holds the spec,
+   `files/` and `FILES.md` the doc's files, and `PREVIOUS_ERRORS.md` the runtime
    errors the live viz reported plus the viz's last failure.
 2. `npm install --ignore-scripts`.
 3. `claude -p --restricted` in the workspace with no MCP servers, the tools Read,

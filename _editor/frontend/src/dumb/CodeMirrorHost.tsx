@@ -13,15 +13,17 @@ type Props = {
   onSave: () => void;
   /** the editor lost focus */
   onBlur?: () => void;
+  /** files dropped or pasted into the editor, and the position they land at */
+  onFiles?: (files: File[], pos: number) => void;
   editorRef?: RefObject<EditorView | null>;
 };
 
 /** A CodeMirror editor with history, line wrapping and the app's theme. */
-export function CodeMirrorHost({ value, extensions = [], onChange, onSave, onBlur, editorRef }: Props) {
+export function CodeMirrorHost({ value, extensions = [], onChange, onSave, onBlur, onFiles, editorRef }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const view = useRef<EditorView | null>(null);
-  const handlers = useRef({ onChange, onSave, onBlur });
-  useEffect(() => { handlers.current = { onChange, onSave, onBlur }; });
+  const handlers = useRef({ onChange, onSave, onBlur, onFiles });
+  useEffect(() => { handlers.current = { onChange, onSave, onBlur, onFiles }; });
 
   useEffect(() => {
     const editor = new EditorView({
@@ -36,7 +38,23 @@ export function CodeMirrorHost({ value, extensions = [], onChange, onSave, onBlu
           editorTheme,
           ...extensions,
           EditorView.updateListener.of((u) => { if (u.docChanged) handlers.current.onChange(u.state.doc.toString()); }),
-          EditorView.domEventHandlers({ blur: () => { handlers.current.onBlur?.(); } }),
+          EditorView.domEventHandlers({
+            blur: () => { handlers.current.onBlur?.(); },
+            drop: (e, view) => {
+              const files = [...(e.dataTransfer?.files ?? [])];
+              if (!files.length || !handlers.current.onFiles) return false;
+              e.preventDefault();
+              handlers.current.onFiles(files, view.posAtCoords({ x: e.clientX, y: e.clientY }) ?? view.state.selection.main.head);
+              return true;
+            },
+            paste: (e, view) => {
+              const files = [...(e.clipboardData?.files ?? [])];
+              if (!files.length || !handlers.current.onFiles) return false;
+              e.preventDefault();
+              handlers.current.onFiles(files, view.state.selection.main.head);
+              return true;
+            },
+          }),
         ],
       }),
     });

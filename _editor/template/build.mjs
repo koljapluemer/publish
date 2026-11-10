@@ -37,7 +37,11 @@ const result = await build({
   minify: true,
   legalComments: 'none',
   logLevel: 'warning',
-  loader: { '.png': 'dataurl', '.jpg': 'dataurl', '.svg': 'dataurl', '.woff': 'dataurl', '.woff2': 'dataurl', '.ttf': 'dataurl', '.csv': 'text', '.txt': 'text' },
+  loader: {
+    '.png': 'dataurl', '.jpg': 'dataurl', '.jpeg': 'dataurl', '.webp': 'dataurl', '.gif': 'dataurl', '.avif': 'dataurl', '.svg': 'dataurl',
+    '.woff': 'dataurl', '.woff2': 'dataurl', '.ttf': 'dataurl', '.otf': 'dataurl',
+    '.csv': 'text', '.tsv': 'text', '.txt': 'text', '.md': 'text', '.geojson': 'json',
+  },
 });
 const out = (ext) => result.outputFiles.filter((f) => f.path.endsWith(ext)).map((f) => f.text).join('\n');
 const body = await readFile('src/body.html', 'utf-8');

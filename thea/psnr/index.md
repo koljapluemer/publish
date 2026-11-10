@@ -1,5 +1,12 @@
 # Peak Signal-to-Noise Ratio
 
+## What are we trying to answer?
+
+*How well has our image survived the compression we just did*?
+
+![](./original.jpg)
+![](./fried.jpg)
+
 
 ```thea serene-yak
 Visualize the formula for the Peak Signal-to-Noise Ratio.

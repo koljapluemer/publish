@@ -1,10 +1,20 @@
 /** A JSON request to the server; its JSON answer, or an Error with the server's message. */
 export async function api<T>(method: string, url: string, body?: unknown): Promise<T> {
-  const res = await fetch(url, {
+  return answer<T>(method, url, await fetch(url, {
     method,
     headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
     body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  }));
+}
+
+/** Posts `files` as multipart form fields named `file`; the JSON answer, or an Error with the server's message. */
+export async function upload<T>(url: string, files: File[]): Promise<T> {
+  const form = new FormData();
+  for (const f of files) form.append('file', f, f.name);
+  return answer<T>('POST', url, await fetch(url, { method: 'POST', body: form }));
+}
+
+async function answer<T>(method: string, url: string, res: Response): Promise<T> {
   if (!res.ok) {
     let message = `${method} ${url}: ${res.status}`;
     try {
@@ -22,3 +32,5 @@ export type TheaJob = {
 };
 export type TheaMeta = { spec: string; model: string | null; created: string; cost_usd: number | null; turns: number | null };
 export type TheaStatus = { available: boolean; reason: string | null };
+/** one of a doc's files, next to its index.md */
+export type DocFile = { name: string; size: number };

@@ -7,6 +7,11 @@ Workspace contract:
 - Add npm packages with `npm install <package>@<exact version>` (prefer well-known, maintained ones; read their docs in node_modules when unsure of an API). Everything is bundled by esbuild into one file.
 - Don't change build.mjs or the bridge script it inlines; the app relies on them.
 
+Data files (only when the workspace has a files/ folder):
+- files/ holds read-only copies of files the document supplies (data, images, fonts); FILES.md describes each. The spec names them by bare filename, e.g. "rain.csv" means files/rain.csv.
+- Use them whenever the spec names them, instead of invented data. Import them from src/ as `../files/<name>`: .json and .geojson are parsed, .csv/.tsv/.txt/.md are strings, images and fonts are data URLs. Import only what the viz needs.
+- Everything imported is inlined into the page. If a file is large, reduce it at build time (a node script run before the build that writes a small JSON into src/) instead of bundling it whole.
+
 Runtime (a sandboxed iframe with an opaque origin):
 - It must work fully offline: no fetch/XHR/WebSocket, no remote scripts, fonts, images or tiles. Bundle every library; inline small assets (imports of .svg/.png/.csv/.txt become data URLs or strings). Hardcode plausible sample data when the spec needs data it doesn't give.
 - No localStorage, sessionStorage, cookies, alert/confirm/prompt or window.open. Keep state in memory.

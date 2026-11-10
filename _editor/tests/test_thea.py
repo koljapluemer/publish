@@ -71,3 +71,74 @@ def test_view_csp(client, tmp_path):
     r = client.get("/api/viz/doc/a-b/view")
     assert r.status_code == 200
     assert r.headers["Content-Security-Policy"].startswith("sandbox allow-scripts; default-src 'none'")
+
+
+# --- the doc's files -------------------------------------------------------------
+
+
+def _upload(client, *files):
+    from io import BytesIO
+    return client.post("/api/docs/doc/files", data={"file": [(BytesIO(d), n) for n, d in files]},
+                       content_type="multipart/form-data")
+
+
+def test_files_roundtrip(client, tmp_path):
+    assert client.get("/api/docs/doc/files").json == []
+    r = _upload(client, ("rain.csv", b"month,mm\n1,40\n"), ("photo.png", b"\x89PNG"))
+    assert r.status_code == 201
+    assert r.json == [{"name": "photo.png", "size": 4}, {"name": "rain.csv", "size": 14}]
+    assert (tmp_path / "doc" / "rain.csv").read_bytes() == b"month,mm\n1,40\n"
+    got = client.get("/api/docs/doc/files/rain.csv")
+    assert got.data == b"month,mm\n1,40\n"
+    assert got.headers["Content-Security-Policy"].startswith("sandbox;")
+    assert got.headers["X-Content-Type-Options"] == "nosniff"
+    _upload(client, ("rain.csv", b"x"))
+    assert (tmp_path / "doc" / "rain.csv").read_bytes() == b"x"
+    assert client.delete("/api/docs/doc/files/rain.csv").json == [{"name": "photo.png", "size": 4}]
+    assert client.get("/api/docs/doc/files/rain.csv").status_code == 404
+
+
+def test_files_list_skips_doc_viz_and_others(client, tmp_path):
+    (tmp_path / "doc" / "viz" / "a-b").mkdir(parents=True)
+    for name in (".hidden.csv", "notes.exe", ".index.md.tmp"):
+        (tmp_path / "doc" / name).write_text("x")
+    assert client.get("/api/docs/doc/files").json == []
+
+
+@pytest.mark.parametrize("name", ["../x.csv", ".hidden.csv", "a.exe", "index.md", "noext", "a b.csv"])
+def test_bad_file_names(client, name):
+    assert _upload(client, (name, b"x")).status_code == 400
+
+
+def test_bad_file_paths(client):
+    assert client.get("/api/docs/doc/files/index.md").status_code == 400
+    assert client.get("/api/docs/doc/files/..%2Findex.md").status_code in (400, 404)
+    assert client.delete("/api/docs/nope/files/a.csv").status_code == 404
+
+
+def test_file_too_large(client, tmp_path):
+    from thea import MAX_FILE_BYTES
+    assert _upload(client, ("big.csv", b"x" * (MAX_FILE_BYTES + 1))).status_code == 400
+    assert not (tmp_path / "doc" / "big.csv").exists()
+
+
+def test_files_in_workspace_not_in_viz(tmp_path, monkeypatch):
+    monkeypatch.setattr(generate, "ROOT", tmp_path / "thea")
+    monkeypatch.setattr(generate, "CACHE_DIR", tmp_path / "cache")
+    doc = tmp_path / "thea" / "doc"
+    doc.mkdir(parents=True)
+    (doc / "index.md").write_text("hi")
+    (doc / "rain.csv").write_text("month,mm\n" + "".join(f"{m},{m * 10}\n" for m in range(1, 13)))
+    (doc / "shape.json").write_text('{"a": 1, "b": [1, 2]}')
+
+    ws = generate._workspace("doc/a-b", generate.TEMPLATE)
+    copies = generate._copy_files(generate.doc_files("doc"), ws)
+    assert sorted(p.name for p in copies) == ["rain.csv", "shape.json"]
+    md = (ws / "FILES.md").read_text()
+    assert "## rain.csv" in md and "13 lines" in md and "1,10" in md and "12,120" not in md
+    assert "An object with 2 keys: a, b" in md
+    # cleared on the next run, and never saved as a source
+    (ws / "dist").mkdir()
+    assert not any(p.relative_to(ws).parts[0] in ("files", "FILES.md") for p in generate._sources(ws))
+    generate._workspace("doc/a-b", generate.TEMPLATE)
+    assert not (ws / "files").exists() and not (ws / "FILES.md").exists()

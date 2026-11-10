@@ -17,6 +17,19 @@ _HEADER = re.compile(r"^[ \t]{0,3}(?:`{3,}|~{3,})[ \t]*thea(?:[ \t]+(\S+))?[ \t]
 NAME = re.compile(r"^[a-z]+-[a-z]+$")
 DOC = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 
+# a doc's files: flat next to its index.md, of the types a viz build can bundle
+INDEX = "index.md"
+FILE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
+FILE_TYPES = frozenset({"csv", "tsv", "txt", "md", "json", "geojson", "svg", "png", "jpg", "jpeg", "webp",
+                        "gif", "avif", "woff", "woff2", "ttf", "otf"})
+MAX_FILE_BYTES = 2 * 1024 * 1024
+
+
+def is_file_name(name: str) -> bool:
+    """Whether `name` can be one of a doc's files."""
+    return (isinstance(name, str) and len(name) <= 128 and bool(FILE.match(name)) and name != INDEX
+            and "." in name and name.rsplit(".", 1)[1].lower() in FILE_TYPES)
+
 
 @dataclass(frozen=True)
 class Block:
