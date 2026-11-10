@@ -1,0 +1,153 @@
+@import 'katex/dist/katex.min.css';
+
+.psnr {
+  padding: 0.5rem 0 1rem;
+  color: var(--viz-fg);
+  font-family: var(--viz-font);
+  --hl: #f59e0b;
+}
+:root[data-theme="dark"] .psnr { --hl: #fbbf24; }
+
+.panels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.5rem, 2vw, 1.25rem);
+  max-width: 720px;
+  margin: 0 auto;
+}
+.panels figure { margin: 0; min-width: 0; }
+.panels canvas {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+  image-rendering: pixelated;
+  border-radius: 4px;
+  outline: 1px solid var(--viz-border);
+}
+.panels canvas.diff { background: var(--viz-surface); }
+figcaption {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--viz-muted);
+  text-align: center;
+  line-height: 1.3;
+}
+.sym { font-family: "KaTeX_Math", serif; font-style: italic; color: var(--viz-fg); white-space: nowrap; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  max-width: 720px;
+  margin: 1rem auto 0.6rem;
+}
+button {
+  font: inherit;
+  font-size: 0.875rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 6px;
+  border: 1px solid var(--viz-border);
+  background: var(--viz-surface);
+  color: var(--viz-fg);
+  cursor: pointer;
+  min-width: 4.5rem;
+}
+button:hover { border-color: var(--viz-muted); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--viz-accent); outline-offset: 2px; }
+button.primary { background: var(--viz-accent); border-color: var(--viz-accent); color: #fff; }
+:root[data-theme="dark"] button.primary { color: #0b1220; }
+button.primary:hover { filter: brightness(1.08); }
+
+.speed {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--viz-muted);
+  flex: 1 1 200px;
+}
+.speed input { flex: 1; min-width: 80px; accent-color: var(--viz-accent); }
+.speed output { font-family: var(--viz-mono); font-size: 0.8rem; min-width: 6.5em; text-align: right; color: var(--viz-fg); }
+
+.progress {
+  max-width: 720px;
+  margin: 0 auto;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--viz-surface);
+  overflow: hidden;
+}
+#progress-bar { height: 100%; width: 0; background: var(--viz-accent); }
+.status {
+  max-width: 720px;
+  margin: 0.35rem auto 0;
+  font-size: 0.8rem;
+  color: var(--viz-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.kernel {
+  max-width: 720px;
+  margin: 1rem auto 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--viz-border);
+}
+.kernel-head { font-size: 0.85rem; color: var(--viz-muted); margin-bottom: 0.6rem; }
+.mono { font-family: var(--viz-mono); color: var(--viz-fg); font-size: 0.8rem; }
+.kernel-row { display: flex; align-items: flex-start; gap: 0.6rem; flex-wrap: wrap; }
+.patch, .grid-wrap { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+.patch canvas {
+  width: 64px; height: 64px;
+  image-rendering: pixelated;
+  border-radius: 3px;
+  outline: 2px solid var(--hl);
+}
+.patch span, .grid-wrap > span { font-size: 0.75rem; color: var(--viz-muted); }
+.patch span { font-family: "KaTeX_Math", serif; font-style: italic; font-size: 0.9rem; color: var(--viz-fg); }
+.op { font-size: 1.2rem; color: var(--viz-muted); line-height: 64px; }
+.grid-wrap { flex: 1 1 200px; align-items: flex-start; }
+.kgrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+  width: 100%;
+  max-width: 280px;
+}
+.kgrid div {
+  position: relative;
+  aspect-ratio: 1.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--viz-mono);
+  font-size: 0.72rem;
+  border-radius: 2px;
+  background: var(--viz-surface);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+}
+.kgrid div i {
+  position: absolute; inset: 0;
+  background: var(--viz-accent);
+}
+.kgrid div b { position: relative; font-weight: 500; }
+.kgrid div.hot b { color: #fff; }
+:root[data-theme="dark"] .kgrid div.hot b { color: #0b1220; }
+
+.formulas {
+  max-width: 720px;
+  margin: 1rem auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.f { overflow-x: auto; overflow-y: hidden; font-size: 0.95rem; }
+.f .katex-display { margin: 0.5em 0; }
+.f .hl-sse { color: var(--hl); }
+.f .hl-n { color: var(--viz-accent); }
+.f .hl-res { color: var(--viz-fg); font-weight: 600; }
+@media (max-width: 480px) {
+  .f { font-size: 0.78rem; }
+}

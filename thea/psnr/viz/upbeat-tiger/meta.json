@@ -1,0 +1,9 @@
+{
+  "spec": "Demonstrate how decibel work in the abstract.\nOffer an input field for numbers.\nShow a simple number-line where this number gets converted to decibel, showcasing how decibel 'shrinks the range'.\nShow just that, don't add explanatory labels or titles",
+  "model": null,
+  "created": "2026-11-10T13:14:52+0100",
+  "cost_usd": 0.2864,
+  "turns": 21,
+  "session": "07a8b5cc-2cad-4e81-b7ad-822eff7218d8",
+  "generator": "publish-thea-2"
+}

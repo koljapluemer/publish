@@ -1,0 +1,48 @@
+<div id="app" class="psnr">
+  <div class="panels">
+    <figure>
+      <canvas id="cv-base" width="400" height="400" aria-label="Original image with kernel"></canvas>
+      <figcaption>Original <span class="sym">I</span></figcaption>
+    </figure>
+    <figure>
+      <canvas id="cv-fried" width="400" height="400" aria-label="Compressed image with kernel"></canvas>
+      <figcaption>Compressed <span class="sym">K</span></figcaption>
+    </figure>
+    <figure>
+      <canvas id="cv-diff" class="diff" width="400" height="400" aria-label="Collected squared differences"></canvas>
+      <figcaption>Squared error <span class="sym">(I−K)²</span></figcaption>
+    </figure>
+  </div>
+
+  <div class="controls">
+    <button id="btn-play" type="button" class="primary">Start</button>
+    <button id="btn-reset" type="button">Reset</button>
+    <label class="speed">
+      <span>Speed</span>
+      <input id="speed" type="range" min="1" max="60" step="1" value="6">
+      <output id="speed-out">6 steps/s</output>
+    </label>
+  </div>
+
+  <div class="progress"><div id="progress-bar"></div></div>
+  <div class="status" id="status"></div>
+
+  <div class="kernel">
+    <div class="kernel-head">Current kernel <span id="kpos" class="mono"></span></div>
+    <div class="kernel-row">
+      <div class="patch"><canvas id="pk-base" width="5" height="5"></canvas><span>I</span></div>
+      <div class="op">−</div>
+      <div class="patch"><canvas id="pk-fried" width="5" height="5"></canvas><span>K</span></div>
+      <div class="op">→</div>
+      <div class="grid-wrap">
+        <div id="kgrid" class="kgrid"></div>
+        <span>mean squared error per pixel (over R,G,B)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="formulas">
+    <div class="f" id="f-mse"></div>
+    <div class="f" id="f-psnr"></div>
+  </div>
+</div>

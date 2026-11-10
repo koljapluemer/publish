@@ -2,6 +2,7 @@ import { Marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { resolveImage } from './resolve';
 import { withoutFrontmatter } from './frontmatter';
+import { imageWidth, withDetails } from './mdext';
 
 // External links open in a new tab.
 DOMPurify.addHook('afterSanitizeAttributes', (node) => {
@@ -27,9 +28,18 @@ const slotting = new Marked({
       if (!slotKinds.includes(kind)) return false;
       return `<div data-fence="${escapeHtml(kind)}" data-info="${escapeHtml(info)}" data-code="${escapeHtml(text)}"></div>\n`;
     },
+    image(token) {
+      const width = (token as { maxWidth?: number }).maxWidth;
+      if (width === undefined) return false;
+      const title = token.title ? ` title="${escapeHtml(token.title)}"` : '';
+      return `<img src="${escapeHtml(token.href)}" alt="${escapeHtml(token.text)}"${title} style="max-width: min(${width}px, 100%)">`;
+    },
   },
   walkTokens(token) {
-    if (token.type === 'image') token.href = resolveImage(token.href, imageBase);
+    if (token.type !== 'image') return;
+    token.href = resolveImage(token.href, imageBase);
+    const sized = imageWidth(token.text);
+    if (sized) [token.text, (token as { maxWidth?: number }).maxWidth] = sized;
   },
 });
 
@@ -38,7 +48,7 @@ export function slotted(s: string, kinds: readonly string[], base = '') {
   slotKinds = kinds;
   imageBase = base;
   try {
-    return DOMPurify.sanitize(slotting.parse(withoutFrontmatter(s), { async: false }));
+    return DOMPurify.sanitize(slotting.parse(withDetails(withoutFrontmatter(s)), { async: false }));
   } finally {
     slotKinds = [];
     imageBase = '';

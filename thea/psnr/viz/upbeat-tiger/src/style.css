@@ -1,0 +1,19 @@
+#app { padding: 0.5rem 0 0.25rem; color: var(--viz-fg); font-family: var(--viz-font); }
+.row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+#num {
+  font: 500 1rem var(--viz-mono); color: var(--viz-fg); background: var(--viz-surface);
+  border: 1px solid var(--viz-border); border-radius: 6px; padding: 0.4rem 0.6rem; width: 11rem; max-width: 100%;
+}
+#num:focus { outline: 2px solid var(--viz-accent); outline-offset: 1px; }
+#num.bad { outline: 2px solid #dc2626; }
+.arrow { color: var(--viz-muted); }
+#db { font: 600 1.05rem var(--viz-mono); color: var(--viz-accent); }
+#chart { display: block; width: 100%; overflow: visible; }
+#chart text { font-family: var(--viz-mono); font-size: 11px; fill: var(--viz-muted); }
+#chart .axis { stroke: var(--viz-fg); stroke-width: 1.5; }
+#chart .tick { stroke: var(--viz-fg); stroke-width: 1; }
+#chart .fan { stroke: var(--viz-muted); stroke-opacity: 0.35; stroke-width: 1; fill: none; }
+#chart .link { stroke: var(--viz-accent); stroke-width: 2; fill: none; }
+#chart .dot { fill: var(--viz-accent); }
+#chart text.val { fill: var(--viz-accent); font-weight: 600; font-size: 12px; }
+#chart text.unit { fill: var(--viz-fg); font-weight: 600; }

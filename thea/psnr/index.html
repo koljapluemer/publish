@@ -30,6 +30,11 @@ table { border-collapse: collapse; display: block; overflow-x: auto; }
 th, td { border: 1px solid var(--border); padding: 0.3em 0.6em; }
 hr { border: 0; border-top: 1px solid var(--border); }
 math[display="block"] { overflow-x: auto; }
+details { margin: 1em 0; padding: 0.4em 0.8em; border: 1px solid var(--border); border-radius: 6px; }
+details[open] { padding-bottom: 0.8em; }
+summary { cursor: pointer; color: var(--muted); }
+details[open] > summary { margin-bottom: 0.6em; }
+details > summary + * { margin-top: 0; }
 iframe.thea { display: block; width: 100%; height: 300px; border: 0; margin: 1.5em 0; }
 </style>
 </head>
@@ -39,6 +44,10 @@ iframe.thea { display: block; width: 100%; height: 300px; border: 0; margin: 1.5
 <p><em>How well has our image survived the compression we just did</em>?</p>
 <p><img src="./original.jpg" alt="original|500" /> <img src="./fried.jpg" alt="deepfried|500" /></p>
 <iframe class="thea" src="viz/serene-yak/index.html" sandbox="allow-scripts" title="serene-yak"></iframe>
+<iframe class="thea" src="viz/orange-canyon/index.html" sandbox="allow-scripts" title="orange-canyon"></iframe>
+<iframe class="thea" src="viz/rosy-plume/index.html" sandbox="allow-scripts" title="rosy-plume"></iframe>
+<iframe class="thea" src="viz/upbeat-quasar/index.html" sandbox="allow-scripts" title="upbeat-quasar"></iframe>
+<iframe class="thea" src="viz/upbeat-tiger/index.html" sandbox="allow-scripts" title="upbeat-tiger"></iframe>
 <script>
 // viz iframes report their height and follow the page's theme (the bridge in _editor/template/build.mjs)
 (() => {

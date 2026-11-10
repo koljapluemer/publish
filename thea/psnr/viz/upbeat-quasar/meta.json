@@ -1,0 +1,9 @@
+{
+  "spec": "base_small.jpg and fried_small.jpg are two 50x50 pixel images, the latter is a compressed version of the former.\nDemonstrate how PSNR works by showing how the kernel moves over them, collecting the pixel differences.\nBelow this, visualize the MSE and the base PSNR in proper tex, live updating the formula values as the kernel moves.\nAllow user to set kernel speed and to start/stop/reset the animation.",
+  "model": null,
+  "created": "2026-11-10T13:13:25+0100",
+  "cost_usd": 0.5552,
+  "turns": 29,
+  "session": "2fdbefbf-0bdf-4c17-a37b-e5929b841bd8",
+  "generator": "publish-thea-2"
+}

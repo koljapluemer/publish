@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script data-thea-bridge>(() => {
+  const post = (m) => { if (parent !== window) parent.postMessage({ source: 'thea', ...m }, '*'); };
+  const apply = (mode) => { document.documentElement.dataset.theme = mode; document.documentElement.style.colorScheme = mode; };
+  apply(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  addEventListener('message', (e) => { if (e.source === parent && e.data && e.data.type === 'theme') apply(e.data.mode === 'dark' ? 'dark' : 'light'); });
+  addEventListener('error', (e) => post({ type: 'error', message: String(e.message || e.error) }));
+  addEventListener('unhandledrejection', (e) => post({ type: 'error', message: String((e.reason && e.reason.message) || e.reason) }));
+  const size = () => post({ type: 'resize', height: Math.ceil(document.documentElement.getBoundingClientRect().height) });
+  addEventListener('DOMContentLoaded', () => { new ResizeObserver(size).observe(document.documentElement); size(); });
+})();</script>
+<style>html, body { margin: 0; }
+:root { --viz-bg: transparent; --viz-surface: #f4f4f5; --viz-fg: #18181b; --viz-muted: #71717a; --viz-border: #e4e4e7;
+  --viz-accent: #2563eb; --viz-series: #2563eb, #ea580c, #16a34a, #9333ea, #db2777, #0891b2;
+  --viz-font: system-ui, "Noto Sans", "DejaVu Sans", sans-serif; --viz-mono: ui-monospace, "DejaVu Sans Mono", monospace;
+  color: var(--viz-fg); background: var(--viz-bg); font: 15px/1.5 var(--viz-font); }
+:root[data-theme="dark"] { --viz-surface: #27272a; --viz-fg: #f4f4f5; --viz-muted: #a1a1aa; --viz-border: #3f3f46;
+  --viz-accent: #60a5fa; --viz-series: #60a5fa, #fb923c, #4ade80, #c084fc, #f472b6, #22d3ee; }</style>
+<style>#app{padding:.5rem 0 .25rem;color:var(--viz-fg);font-family:var(--viz-font)}.row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.75rem}#num{font:500 1rem var(--viz-mono);color:var(--viz-fg);background:var(--viz-surface);border:1px solid var(--viz-border);border-radius:6px;padding:.4rem .6rem;width:11rem;max-width:100%}#num:focus{outline:2px solid var(--viz-accent);outline-offset:1px}#num.bad{outline:2px solid #dc2626}.arrow{color:var(--viz-muted)}#db{font:600 1.05rem var(--viz-mono);color:var(--viz-accent)}#chart{display:block;width:100%;overflow:visible}#chart text{font-family:var(--viz-mono);font-size:11px;fill:var(--viz-muted)}#chart .axis{stroke:var(--viz-fg);stroke-width:1.5}#chart .tick{stroke:var(--viz-fg);stroke-width:1}#chart .fan{stroke:var(--viz-muted);stroke-opacity:.35;stroke-width:1;fill:none}#chart .link{stroke:var(--viz-accent);stroke-width:2;fill:none}#chart .dot{fill:var(--viz-accent)}#chart text.val{fill:var(--viz-accent);font-weight:600;font-size:12px}#chart text.unit{fill:var(--viz-fg);font-weight:600}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="row">
+    <input id="num" type="number" inputmode="decimal" step="any" min="0" value="250000" aria-label="Number" />
+    <span class="arrow">→</span>
+    <output id="db" for="num"></output>
+  </div>
+  <svg id="chart" role="img" aria-label="Linear number line mapped to a decibel number line"></svg>
+</div>
+
+<script>"use strict";(()=>{var $="http://www.w3.org/2000/svg",p=document.getElementById("num"),M=document.getElementById("db"),x=document.getElementById("chart"),S={"-":"\u207B",0:"\u2070",1:"\xB9",2:"\xB2",3:"\xB3",4:"\u2074",5:"\u2075",6:"\u2076",7:"\u2077",8:"\u2078",9:"\u2079"},E=e=>e>=0&&e<=3?String(10**e):e===-1?"0.1":"10"+String(e).split("").map(a=>S[a]).join("");function s(e,a,n){let c=document.createElementNS($,e);for(let[i,r]of Object.entries(a))c.setAttribute(i,String(r));return n!==void 0&&(c.textContent=n),x.appendChild(c),c}function B(e){return`${(Math.abs(e)>=100?e.toFixed(0):e.toFixed(1)).replace("-","\u2212")} dB`}var f=25e4;function z(){let e=Math.max(280,x.clientWidth||600),a=150,n=14,c=30,i=34,r=116;x.setAttribute("viewBox",`0 0 ${e} ${a}`),x.setAttribute("height",String(a)),x.replaceChildren();let b=Number.isFinite(f)&&f>0,h=b?Math.log10(f):0,d=Math.min(15,Math.max(6,Math.ceil(h-1e-9))),l=Math.max(-15,Math.min(0,Math.floor(h+1e-9))),k=10**d,g=t=>n+t/k*(e-n-c),m=t=>n+(t-l*10)/((d-l)*10)*(e-n-c);for(let t=l;t<=d;t++){let o=g(10**t),v=m(t*10);s("path",{class:"fan",d:`M${o},${i} C${o},${(i+r)/2} ${v},${(i+r)/2} ${v},${r}`})}s("line",{class:"axis",x1:n,x2:e-c+8,y1:i,y2:i}),s("line",{class:"axis",x1:n,x2:e-c+8,y1:r,y2:r});let y=1/0;for(let t=d;t>=l;t--){let o=g(10**t);s("line",{class:"tick",x1:o,x2:o,y1:i-4,y2:i+4}),y-o>=36&&o-n>=22&&(s("text",{x:o,y:i-10,"text-anchor":"middle"},E(t)),y=o)}s("line",{class:"tick",x1:n,x2:n,y1:i-6,y2:i+6}),s("text",{x:n,y:i-10,"text-anchor":"middle"},"0");let u=m(10)-m(0)>=30?1:m(10)-m(0)>=15?2:5;for(let t=l;t<=d;t++){let o=m(t*10);if(s("line",{class:"tick",x1:o,x2:o,y1:r-4,y2:r+4}),(t-l)%u===0||t===d){if(t===d&&(t-l)%u!==0&&(t-l)%u<u/2+.5)continue;s("text",{x:o,y:r+20,"text-anchor":"middle"},String(t*10).replace("-","\u2212"))}}if(s("text",{class:"unit",x:e-c+12,y:r+4},"dB"),b){let t=10*h,o=g(f),v=m(t);s("path",{class:"link",d:`M${o},${i} C${o},${(i+r)/2} ${v},${(i+r)/2} ${v},${r}`}),s("circle",{class:"dot",cx:o,cy:i,r:5}),s("circle",{class:"dot",cx:v,cy:r,r:5})}}function w(){let e=p.value.trim(),a=e===""?NaN:Number(e),n=Number.isFinite(a)&&a>=1e-15&&a<1e15,c=a===0;p.classList.toggle("bad",e!==""&&!n&&!c),(n||c)&&(f=a),M.textContent=n?B(10*Math.log10(a)):c?"\u2212\u221E dB":"",z()}p.addEventListener("input",w);new ResizeObserver(()=>z()).observe(x);w();})();
+</script>
+</body>
+</html>

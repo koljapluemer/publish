@@ -1,0 +1,49 @@
+#app {
+  position: relative;
+  padding: 0.5rem 0 7rem;
+  color: var(--viz-fg);
+  font-family: var(--viz-font);
+}
+
+.formula {
+  font-size: clamp(13px, 4.6vw, 30px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.formula .katex-display { margin: 0.4em 0; }
+.formula .katex { color: var(--viz-fg); }
+
+.formula .part {
+  cursor: help;
+  border-radius: 0.15em;
+  outline: none;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.formula.has-active .katex-html { color: var(--viz-muted); }
+.formula.has-active .part.active,
+.formula.has-active .part.active * { color: var(--viz-accent); }
+.formula .part.active { background: color-mix(in srgb, var(--viz-accent) 12%, transparent); }
+.formula .part:focus-visible { box-shadow: 0 0 0 2px var(--viz-accent); }
+
+.tip {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(320px, 100%);
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--viz-border);
+  border-radius: 8px;
+  background: var(--viz-surface);
+  color: var(--viz-fg);
+  font-size: 13.5px;
+  line-height: 1.45;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.12);
+  pointer-events: none;
+}
+.tip[hidden] { display: none; }
+.tip strong { display: block; font-weight: 600; margin-bottom: 0.15rem; }
+.tip span { color: var(--viz-muted); }

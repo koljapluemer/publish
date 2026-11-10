@@ -29,13 +29,16 @@ Do not add labels, titles or anything else apart from that.
 ```thea rosy-plume
 base_small.jpg and fried_small.jpg are two 50x50 pixel images, the latter is a compressed version of the former.
 Demonstrate how PSNR works by showing how the kernel moves over them, collecting the pixel differences.
+Make the kernel 1px wide and tall.
+Show only one visualization row: og image, compressed image, and heatmap demonstrating the read difference. Do not add other stuff, except the controls for the following:
 Allow user to set kernel speed and to start/stop/reset the animation.
 ```
 
 ```thea upbeat-quasar
 base_small.jpg and fried_small.jpg are two 50x50 pixel images, the latter is a compressed version of the former.
 Demonstrate how PSNR works by showing how the kernel moves over them, collecting the pixel differences.
-Below this, visualize the MSE and the base PSNR in proper tex, live updating the formula values as the kernel moves.
+Below this, visualize the MSE and the base PSNR in proper tex, live updating the formula values as the kernel moves. Make sure to include the sums etc, the workings of the formula should be fully understandable.
+Make the kernel 1x1 px. 
 Allow user to set kernel speed and to start/stop/reset the animation.
 ```
 

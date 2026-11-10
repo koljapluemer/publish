@@ -14,6 +14,8 @@ import frontmatter
 import pypandoc
 import typst
 
+import mdext
+
 HERE = Path(__file__).parent
 TEMPLATES = HERE / "pdf-templates"
 NORMALIZE_FILTER = TEMPLATES / "normalize.lua"
@@ -175,7 +177,7 @@ def _body_to_typst(body: str, doc_dir: str, citations: bool) -> str:
     # that would make Typst fail.
     markdown = "markdown-yaml_metadata_block" + ("" if citations else "-citations")
     return _pandoc(
-        body,
+        mdext.extend(body, "pdf"),
         markdown,
         filters=[str(NORMALIZE_FILTER)],
         extra_args=["--metadata", f"doc-dir={doc_dir}"],

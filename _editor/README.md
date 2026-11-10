@@ -60,6 +60,29 @@ first. A block whose spec differs from `meta.json`'s says "spec changed". A
 rebuild replaces `viz/<name>/`, and git is the version history. A viz whose
 block was removed or renamed stays on disk until you delete it.
 
+## Markdown extensions
+
+Every renderer (the preview, the web page and the PDF) understands two
+additions to Markdown:
+
+```
+??? Optional label
+Anything, viz blocks included; collapsed by default.
+!!!
+
+![original|500](original.jpg)
+```
+
+- A line `???` opens a collapsed section, a line `!!!` closes it. The text
+  after `???` is its summary (default "Details"). Sections nest, one left open
+  closes at the end of the doc, and lines inside fenced code don't count. A PDF
+  shows the content, with the label as a bold line.
+- `|500` at the end of an image's alt text shows it at most 500 px wide (and
+  never wider than the page). A PDF sets that width.
+
+`mdext.py` rewrites them to plain pandoc Markdown for the web page and the PDF;
+`frontend/src/dumb/mdext.ts` mirrors it for the preview.
+
 ## Files
 
 A doc's files sit next to its `index.md`: CSV, TSV, JSON, GeoJSON, text,

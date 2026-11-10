@@ -15,6 +15,7 @@ from pathlib import Path
 import frontmatter
 import pypandoc
 
+import mdext
 import thea
 from pdf import LEADING_H1, RenderError, wants
 
@@ -83,7 +84,7 @@ def render(text: str, folder: Path, meta: dict) -> str:
     pagetitle = str(title) if title is not None else match[1] if match else folder.name
     try:
         return pypandoc.convert_text(
-            with_vizzes(text, folder),
+            mdext.extend(with_vizzes(text, folder), "web"),
             "html5",
             format="markdown-citations",
             extra_args=["--standalone", f"--template={TEMPLATE}", "--mathml", "--wrap=none",
