@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script data-thea-bridge>(() => {
+  const post = (m) => { if (parent !== window) parent.postMessage({ source: 'thea', ...m }, '*'); };
+  const apply = (mode) => { document.documentElement.dataset.theme = mode; document.documentElement.style.colorScheme = mode; };
+  apply(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  addEventListener('message', (e) => { if (e.source === parent && e.data && e.data.type === 'theme') apply(e.data.mode === 'dark' ? 'dark' : 'light'); });
+  addEventListener('error', (e) => post({ type: 'error', message: String(e.message || e.error) }));
+  addEventListener('unhandledrejection', (e) => post({ type: 'error', message: String((e.reason && e.reason.message) || e.reason) }));
+  const size = () => post({ type: 'resize', height: Math.ceil(document.documentElement.getBoundingClientRect().height) });
+  addEventListener('DOMContentLoaded', () => { new ResizeObserver(size).observe(document.documentElement); size(); });
+})();</script>
+<style>html, body { margin: 0; }
+:root { --viz-bg: transparent; --viz-surface: #f4f4f5; --viz-fg: #18181b; --viz-muted: #71717a; --viz-border: #e4e4e7;
+  --viz-accent: #2563eb; --viz-series: #2563eb, #ea580c, #16a34a, #9333ea, #db2777, #0891b2;
+  --viz-font: system-ui, "Noto Sans", "DejaVu Sans", sans-serif; --viz-mono: ui-monospace, "DejaVu Sans Mono", monospace;
+  color: var(--viz-fg); background: var(--viz-bg); font: 15px/1.5 var(--viz-font); }
+:root[data-theme="dark"] { --viz-surface: #27272a; --viz-fg: #f4f4f5; --viz-muted: #a1a1aa; --viz-border: #3f3f46;
+  --viz-accent: #60a5fa; --viz-series: #60a5fa, #fb923c, #4ade80, #c084fc, #f472b6, #22d3ee; }</style>
+<style>.rain{position:relative;margin:0;padding:.5rem 0;font-family:var(--viz-font);color:var(--viz-fg)}.rain-chart{width:100%;aspect-ratio:16 / 9;min-height:220px;max-height:440px}.rain-chart svg{display:block;width:100%;height:100%;overflow:visible}.rain .grid line{stroke:var(--viz-border);stroke-width:1;shape-rendering:crispEdges}.rain .axis-label{fill:var(--viz-muted);font-size:12px;font-variant-numeric:tabular-nums}.rain .unit{fill:var(--viz-muted);font-size:12px}.rain .bar{fill:var(--viz-accent);opacity:.82;transition:opacity .12s ease;cursor:default}.rain .bar-group:focus{outline:none}.rain .bar-group:focus-visible .bar{stroke:var(--viz-fg);stroke-width:2}.rain .bar-group.active .bar{opacity:1}.rain.has-active .bar-group:not(.active) .bar{opacity:.4}.rain .hit{fill:transparent}.rain-tip{position:absolute;pointer-events:none;transform:translate(-50%,calc(-100% - 8px));background:var(--viz-surface);border:1px solid var(--viz-border);border-radius:6px;padding:4px 9px;font-size:13px;line-height:1.35;white-space:nowrap;box-shadow:0 2px 8px #0000001f}.rain-tip .m{color:var(--viz-muted);display:block;font-size:12px}.rain-tip .v{font-weight:600;font-variant-numeric:tabular-nums}.rain figcaption{margin-top:.4rem;color:var(--viz-muted);font-size:13px}
+</style>
+</head>
+<body>
+<figure class="rain">
+  <div class="rain-chart" id="chart" role="img" aria-label="Bar chart of average monthly rainfall in Berlin, in millimetres"></div>
+  <div class="rain-tip" id="tip" role="status" aria-live="polite" hidden></div>
+  <figcaption>Average monthly precipitation, Berlin (sample data)</figcaption>
+</figure>
+
+<script>"use strict";(()=>{var C="http://www.w3.org/2000/svg",w=[{short:"Jan",long:"January",mm:42},{short:"Feb",long:"February",mm:33},{short:"Mar",long:"March",mm:41},{short:"Apr",long:"April",mm:37},{short:"May",long:"May",mm:54},{short:"Jun",long:"June",mm:69},{short:"Jul",long:"July",mm:56},{short:"Aug",long:"August",mm:58},{short:"Sep",long:"September",mm:45},{short:"Oct",long:"October",mm:37},{short:"Nov",long:"November",mm:44},{short:"Dec",long:"December",mm:55}],$=document.querySelector(".rain"),a=document.getElementById("chart"),l=document.getElementById("tip");function i(s,p,f){let t=document.createElementNS(C,s);for(let[b,h]of Object.entries(p))t.setAttribute(b,String(h));return f&&f.appendChild(t),t}var d=-1;function S(){if(!a||!l||!$)return;let s=a.clientWidth,p=a.clientHeight;if(s===0||p===0)return;let f=s<480,t={top:22,right:4,bottom:24,left:30},b=s-t.left-t.right,h=p-t.top-t.bottom,k=80,A=[0,20,40,60,80],x=e=>t.top+h-e/k*h,c=b/w.length,u=c*(1-(f?.22:.28)),g=i("svg",{width:s,height:p,viewBox:`0 0 ${s} ${p}`,"aria-hidden":"false"}),L=i("g",{class:"grid"},g);for(let e of A){let n=Math.round(x(e))+.5;i("line",{x1:t.left,x2:s-t.right,y1:n,y2:n},L);let o=i("text",{class:"axis-label",x:t.left-6,y:n,"text-anchor":"end","dominant-baseline":"middle"},g);o.textContent=String(e)}let T=i("text",{class:"unit",x:0,y:t.top-12,"text-anchor":"start"},g);T.textContent="mm";let J=i("g",{},g);w.forEach((e,n)=>{let o=i("g",{class:"bar-group"+(n===d?" active":""),tabindex:0,role:"img","aria-label":`${e.long}: ${e.mm} mm`},J),m=t.left+n*c+(c-u)/2,r=x(e.mm),v=Math.min(3,u/4),M=t.top+h-r;i("path",{class:"bar",d:`M${m},${r+M}V${r+v}Q${m},${r} ${m+v},${r}H${m+u-v}Q${m+u},${r} ${m+u},${r+v}V${r+M}Z`},o),i("rect",{class:"hit",x:t.left+n*c,y:t.top,width:c,height:h},o);let N=i("text",{class:"axis-label",x:t.left+n*c+c/2,y:p-6,"text-anchor":"middle"},g);N.textContent=f?e.short[0]:e.short;let E=()=>y(n);o.addEventListener("pointerenter",E),o.addEventListener("focus",E),o.addEventListener("pointerleave",()=>y(-1)),o.addEventListener("blur",()=>y(-1))}),a.replaceChildren(g),z();function y(e){d=e,g.querySelectorAll(".bar-group").forEach((n,o)=>n.classList.toggle("active",o===e)),z()}function z(){if(!l||!$||!a)return;if($.classList.toggle("has-active",d>=0),d<0){l.hidden=!0;return}let e=w[d];l.innerHTML=`<span class="m">${e.long}</span><span class="v">${e.mm} mm</span>`,l.hidden=!1;let n=t.left+d*c+c/2,o=l.offsetWidth,m=Math.max(o/2,Math.min(s-o/2,n));l.style.left=`${a.offsetLeft+m}px`;let r=l.offsetHeight+8-a.offsetTop;l.style.top=`${a.offsetTop+Math.max(r,x(e.mm))}px`}}S();a&&new ResizeObserver(()=>S()).observe(a);})();
+</script>
+</body>
+</html>

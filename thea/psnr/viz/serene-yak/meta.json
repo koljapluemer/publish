@@ -1,0 +1,9 @@
+{
+  "spec": "Visualize the formula for the Peak Signal-to-Noise Ratio.\nRender the formula with proper TeX. Make the parts hoverable so we can see what each part of the formula means.\nDo not add labels, titles or anything else apart from that.\nDo not add the MSE formula, just the basic PSNR.",
+  "model": null,
+  "created": "2026-11-10T12:28:08+0100",
+  "cost_usd": 0.1572,
+  "turns": 14,
+  "session": "9bf2a16a-2658-4bb9-a27b-70de4ca2cbc5",
+  "generator": "publish-thea-1"
+}

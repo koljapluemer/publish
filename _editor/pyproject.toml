@@ -1,0 +1,15 @@
+[project]
+name = "publish-editor"
+version = "0.1.0"
+description = "Editor for the docs under thea/ and their generated viz blocks"
+requires-python = ">=3.13"
+dependencies = [
+    "flask>=3.1",
+    "playwright>=1.55",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

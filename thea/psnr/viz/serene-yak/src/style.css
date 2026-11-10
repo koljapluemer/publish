@@ -1,0 +1,70 @@
+.psnr {
+  position: relative;
+  padding: 4px 0 128px;
+  font-family: var(--viz-font);
+  color: var(--viz-fg);
+}
+
+.eq .katex-display {
+  margin: 0.6em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 2px;
+}
+
+.eq .katex {
+  font-size: clamp(1.3em, 5.5vw, 2.1em);
+  transition: color 0.15s;
+}
+
+.part {
+  cursor: help;
+  border-radius: 4px;
+  outline: none;
+  transition: color 0.15s, background-color 0.15s, box-shadow 0.15s;
+}
+
+.hovering .katex {
+  color: var(--viz-muted);
+}
+
+.part.on {
+  color: var(--viz-accent);
+  background: color-mix(in srgb, var(--viz-accent) 13%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--viz-accent) 13%, transparent);
+}
+
+.part:focus-visible {
+  box-shadow: 0 0 0 2px var(--viz-accent);
+}
+
+.tip {
+  position: absolute;
+  z-index: 2;
+  width: max-content;
+  max-width: min(300px, 100%);
+  box-sizing: border-box;
+  padding: 8px 11px;
+  border: 1px solid var(--viz-border);
+  border-radius: 8px;
+  background: var(--viz-surface);
+  color: var(--viz-fg);
+  font-size: 13px;
+  line-height: 1.45;
+  pointer-events: none;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.12);
+}
+
+.tip[hidden] {
+  display: none;
+}
+
+.tip-name {
+  font-weight: 600;
+  color: var(--viz-accent);
+  margin-bottom: 2px;
+}
+
+.tip-text {
+  color: var(--viz-fg);
+}

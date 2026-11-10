@@ -1,0 +1,9 @@
+{
+  "spec": "A bar chart of monthly rainfall in Berlin (sample data); hovering a bar shows its value in mm.",
+  "model": null,
+  "created": "2026-11-10T12:18:47+0100",
+  "cost_usd": 0.2219,
+  "turns": 16,
+  "session": "28832a28-79e0-40a6-b31d-83604239bf16",
+  "generator": "publish-thea-1"
+}
