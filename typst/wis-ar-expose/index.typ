@@ -1,9 +1,5 @@
----
-template: scientific
-target: pdf
----
 
-## Background
+== Background
 
 ???
 
@@ -12,7 +8,7 @@ Following the learning curves above, it is easy to argue why this is needed for 
 
 However, there is a class of spaced repetition (there exists some discussion about what exactly constitutes "true" spaced repetition. we simply define it as repetition learning with intentionally adapted intervals) systems that are analog and thus cannot track time except with approximate heuristics. Notably, the Leitner Box.   
 
-## Motivation
+== Motivation
 
 Spaced repetition is found to be very effective in declarative learning.
 However, timestamps
@@ -26,19 +22,19 @@ This research is partly inspired by a reddit comment offering the claim that sin
 
 Here, we model this into a research question: 
 
-## Aim
+== Aim
 
 What we aim to create in this paper is a statement of the following kind:
 
-"If you will use a Leitner Box instead of Anki with FSRS, you will need $n % more time to memorize an average flashcard"
+"If you will use a Leitner Box instead of Anki with FSRS, you will need $n%$ more time to memorize an average flashcard"
 
 The learner can then take this information, weigh it against other facts and preferences, and take an informed decision which learning system to chose. 
 
-## Previous Work
+== Previous Work
 
 into background??
 
-## Method
+== Method
 
 Following previous algo evals (I hope), we pick a learner-centered target metric:
 
@@ -56,7 +52,7 @@ Additionally, we run the simulation on some additional plausible scenarios:
 
 In a second step, we will attempt a kind of hyper-parameter optimization on the Leitner box steps. In *So lernt man Lernen*, Leitner gave no justification for the chosen parameters ( Could we design a physical Leitner box that optimizes efficiency?
 
-## Limitations
+== Limitations
 
 - SR with its paradigm of "atomic", independent practice trials, ignores or violates a considerable range of "lessons learned" from learning psychology
 - SR has an incentive problem: learners want to *opti* retention, not predict it

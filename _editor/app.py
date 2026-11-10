@@ -1,5 +1,4 @@
-"""The editor: the docs under `thea/`, their viz blocks, and the frontend; in
-the background, PDFs and web pages of the repo's Markdown (watch.py)."""
+"""The editor for Thea and Typst docs; rendering runs in the background."""
 
 import argparse
 import logging
@@ -12,10 +11,12 @@ import generate
 import watch
 from generate import ROOT, Busy, Invalid, Unavailable, doc_dir, doc_file, doc_files, viz_dir
 from thea import BUILT, CSP, MAX_FILE_BYTES, THUMB
+from thea import DOC as DOC_NAME
 
 HERE = Path(__file__).parent
 DIST = Path(os.environ.get("EDITOR_FRONTEND_DIST", HERE / "frontend" / "dist"))
 PORT = 8767
+TYPST_ROOT = HERE.parent / "typst"
 # the built page runs in an opaque origin with no network, wherever it's opened
 VIEW_CSP = "sandbox allow-scripts; " + CSP
 NEW_DOC = "# {title}\n\nSome prose.\n\n```thea\nDescribe the visualization.\n```\n"
@@ -43,6 +44,15 @@ def _index(doc: str) -> Path:
     path = doc_dir(doc) / "index.md"
     if not path.is_file():
         abort(404, f"no doc '{doc}'")
+    return path
+
+
+def _typst_index(doc: str) -> Path:
+    if not isinstance(doc, str) or not DOC_NAME.match(doc):
+        raise Invalid(f"invalid doc name '{doc}'")
+    path = TYPST_ROOT / doc / "index.typ"
+    if not path.is_file() or path.is_symlink():
+        abort(404, f"no Typst doc '{doc}'")
     return path
 
 
@@ -78,6 +88,40 @@ def write_doc(doc):
     tmp.write_text(text, encoding="utf-8")
     tmp.replace(path)
     return jsonify(text=text)
+
+
+@app.get("/api/typst")
+def typst_docs():
+    names = sorted(p.parent.name for p in TYPST_ROOT.glob("*/index.typ")) if TYPST_ROOT.is_dir() else []
+    return jsonify(names)
+
+
+@app.get("/api/typst/<doc>")
+def read_typst(doc):
+    source = _typst_index(doc)
+    output = source.with_suffix(".pdf")
+    return jsonify(text=source.read_text(encoding="utf-8"),
+                   pdf_mtime=output.stat().st_mtime if output.is_file() else None)
+
+
+@app.put("/api/typst/<doc>")
+def write_typst(doc):
+    path = _typst_index(doc)
+    text = (request.get_json(silent=True) or {}).get("text")
+    if not isinstance(text, str):
+        raise Invalid("text must be a string")
+    tmp = path.with_name(".index.typ.tmp")
+    tmp.write_text(text, encoding="utf-8")
+    tmp.replace(path)
+    return jsonify(text=text)
+
+
+@app.get("/api/typst/<doc>/pdf")
+def typst_preview(doc):
+    output = _typst_index(doc).with_suffix(".pdf")
+    if not output.is_file() or output.is_symlink():
+        abort(404)
+    return send_file(output, mimetype="application/pdf", conditional=True, max_age=0)
 
 
 def _file_list(doc: str) -> list[dict]:

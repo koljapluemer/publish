@@ -6,6 +6,7 @@ from types import SimpleNamespace
 import pytest
 
 import pdf
+import typst_pdf
 import watch
 from pdf import RenderError, render_if_targeted, wants_pdf
 
@@ -23,9 +24,12 @@ def test_templates_are_found():
 
 
 @pytest.mark.parametrize("rel, expected", [
-    ("a/index.md", True), ("index.md", True),
-    ("a/index.txt", False), (".hidden/index.md", False), ("a/.index.md.tmp", False),
-    ("node_modules/x/README.md", False), ("thea/doc/viz/brisk-river/src/README.md", False),
+    ("a/index.md", True), ("index.md", True), ("deep/nested/index.md", True),
+    ("typst/paper/index.typ", True), ("other/paper/index.typ", True),
+    ("typst/paper/nested/index.typ", True), ("typst/paper/helper.typ", False),
+    ("a/readme.md", False), ("a/index.txt", False), (".hidden/index.md", False),
+    ("a/.index.md.tmp", False), ("node_modules/x/index.md", False),
+    ("thea/doc/viz/brisk-river/src/index.md", False),
 ])
 def test_is_watched(tmp_path, rel, expected):
     assert watch.is_watched(tmp_path / rel, tmp_path) is expected
@@ -101,3 +105,28 @@ def test_watch_catches_up_then_renders_changes(tmp_path):
     finally:
         stop.set()
         thread.join()
+
+
+def test_typst_renders_directly_and_keeps_previous_pdf_on_failure(tmp_path):
+    source = tmp_path / "typst" / "paper" / "index.typ"
+    source.parent.mkdir(parents=True)
+    source.write_text("= Hello\n\nTypst.")
+    output = typst_pdf.render(source, tmp_path)
+    assert output == source.with_suffix(".pdf")
+    before = output.read_bytes()
+    assert before.startswith(b"%PDF")
+    assert typst_pdf.render(source, tmp_path) is None
+
+    source.write_text("#this-function-does-not-exist()")
+    with pytest.raises(RenderError):
+        typst_pdf.render(source, tmp_path, force=True)
+    assert output.read_bytes() == before
+
+
+def test_render_all_includes_typst_entry_points(tmp_path):
+    source = tmp_path / "typst" / "paper" / "index.typ"
+    source.parent.mkdir(parents=True)
+    source.write_text("Direct Typst")
+    watch.render_all(tmp_path)
+    assert source.with_suffix(".pdf").read_bytes().startswith(b"%PDF")
+    assert watch.results()["typst/paper/index.typ"]["pdf"]["ok"]

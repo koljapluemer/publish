@@ -2,11 +2,14 @@
 
 Two things in one process:
 
-- In the background, every `.md` in the repo whose frontmatter `target` has
+- In the background, every `index.md` in the repo whose frontmatter `target` has
   `pdf` is rendered to a PDF next to it, and one with `web` to an HTML page
   in the site folder `_site/`, on startup if it's out of date and whenever it changes (see
-  [PDF](#pdf) and [Web](#web)).
-- A local editor for the Markdown docs under `thea/`, with viz blocks: a fenced
+  [PDF](#pdf) and [Web](#web)). Every `index.typ` is compiled directly to
+  `index.pdf` in the same way.
+- A local editor for the Markdown docs under `thea/` and direct Typst documents
+  under `typst/`. Its collapsible sidebar switches between editable files. Thea
+  docs support viz blocks: a fenced
   block whose info string is `thea` holds the spec of an interactive
   visualization. The local [claude CLI](https://claude.com/claude-code)
   generates it as a small TypeScript project, built into one offline HTML file,
@@ -34,13 +37,15 @@ only: generating runs code as you.
 ## Layout
 
 ```
-thea/<doc>/index.md            the doc
+thea/<doc>/index.md            a Thea/Markdown doc
 thea/<doc>/rain.csv …          its files (data, images, fonts), flat next to it
 thea/<doc>/viz/<name>/         one viz, generated, committed
   src/ package.json …          its sources
   index.html                   the built page
   thumb.png                    800 px wide rendered at 420, cut to 5:3 at most
   meta.json                    the spec it was built from, model, time, turns, cost
+typst/<doc>/index.typ          a direct Typst doc
+typst/<doc>/index.pdf          its generated PDF
 ```
 
 ## Viz blocks
@@ -147,8 +152,9 @@ without network. The iframe is as high as the page reports (the bridge in
 ## Views
 
 `frontend/src/views/registry.ts` maps a repo path (the location hash,
-`#thea/<doc>`) to a view. A bespoke view for another folder is a component plus
-a line there.
+`#thea/<doc>` or `#typst/<doc>`) to a view. The collapsible sidebar lists both
+sets of entry points. A bespoke view for another folder is a component plus a
+line in the registry.
 
 ## PDF
 
@@ -159,6 +165,13 @@ own, so it never waits on viz generation, and `just pdf` runs it alone. If a
 render fails, the error is logged and the previous PDF stays in place.
 `GET /api/status` lists each render since startup under `render`, by file and
 kind (`pdf`, `web`).
+
+An `index.typ` skips pandoc and templates: `typst_pdf.py` compiles it
+directly with the repository as its Typst root, so local imports and assets can
+use paths relative to the source. It produces a sibling `index.pdf`; only files
+named `index.typ` are entry points, so helper `.typ` files are not compiled on their
+own. The Typst editor shows that PDF beside the source and refreshes it after a
+successful watched render. A failed render leaves the last valid preview visible.
 
 ## Web
 

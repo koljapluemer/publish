@@ -47,6 +47,28 @@ def test_docs_roundtrip(client, tmp_path):
     assert client.get("/api/docs").json == ["doc", "other"]
 
 
+def test_typst_docs_roundtrip_and_pdf(client, tmp_path, monkeypatch):
+    root = tmp_path / "typst"
+    monkeypatch.setattr(editor, "TYPST_ROOT", root)
+    source = root / "paper" / "index.typ"
+    source.parent.mkdir(parents=True)
+    source.write_text("= Original")
+    assert client.get("/api/typst").json == ["paper"]
+    assert client.get("/api/typst/paper").json == {"text": "= Original", "pdf_mtime": None}
+    assert client.put("/api/typst/paper", json={"text": "= Changed"}).status_code == 200
+    assert source.read_text() == "= Changed"
+    source.with_suffix(".pdf").write_bytes(b"%PDF-test")
+    response = client.get("/api/typst/paper/pdf")
+    assert response.status_code == 200 and response.mimetype == "application/pdf"
+    assert response.data == b"%PDF-test"
+
+
+@pytest.mark.parametrize("url", ["/api/typst/..", "/api/typst/A", "/api/typst/nope/pdf"])
+def test_bad_typst_paths(client, tmp_path, monkeypatch, url):
+    monkeypatch.setattr(editor, "TYPST_ROOT", tmp_path / "typst")
+    assert client.get(url).status_code in (400, 404)
+
+
 @pytest.mark.parametrize("url", ["/api/docs/..", "/api/docs/A", "/api/viz/doc/..%2F..%2Fx/view",
                                  "/api/viz/doc/Bad/meta", "/api/viz/..%2Fdoc/a-b/meta"])
 def test_bad_paths(client, url):

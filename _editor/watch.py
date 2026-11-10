@@ -1,7 +1,8 @@
 """Watching the repo in the background: every `.md` whose frontmatter `target`
 has `pdf` is rendered to a PDF next to it (pdf.py), and one with `web` to an
 HTML page in the site folder `_site/` (web.py), when it changes, and on startup
-when it's out of date. The editor starts this (app.py); `python watch.py` runs it alone."""
+when it's out of date. Every ``index.typ`` is compiled directly to
+``index.pdf``. The editor starts this (app.py); `python watch.py` runs it alone."""
 
 import argparse
 import logging
@@ -13,6 +14,7 @@ from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
 import pdf
+import typst_pdf
 import web
 from pdf import RenderError
 
@@ -36,7 +38,9 @@ def is_watched(path: Path, root: Path) -> bool:
         parts = path.relative_to(root).parts
     except ValueError:
         return False
-    return path.suffix == ".md" and not any(p.startswith(".") or p in IGNORED_DIRS for p in parts)
+    if any(p.startswith(".") or p in IGNORED_DIRS for p in parts):
+        return False
+    return path.name in {"index.md", "index.typ"}
 
 
 class ChangeCollector(FileSystemEventHandler):
@@ -81,9 +85,12 @@ def render(path: Path, root: Path = REPO, force: bool = False, kinds=tuple(RENDE
     """Render one file to each of `kinds` it targets. Failures are logged so
     that the watcher keeps running; the previous output stays in place."""
     name = path.relative_to(root).as_posix() if path.is_relative_to(root) else path.as_posix()
+    renderers = {"pdf": typst_pdf.render} if path.suffix == ".typ" else RENDERERS
     for kind in kinds:
+        if kind not in renderers:
+            continue
         try:
-            output = RENDERERS[kind](path, root, force=force)
+            output = renderers[kind](path, root, force=force)
         except FileNotFoundError:
             return  # deleted between the event and the render
         except RenderError as e:
@@ -99,7 +106,8 @@ def render(path: Path, root: Path = REPO, force: bool = False, kinds=tuple(RENDE
 
 
 def render_all(root: Path, force: bool = False, kinds=tuple(RENDERERS)) -> None:
-    for path in sorted(root.rglob("*.md")):
+    candidates = list(root.rglob("index.md")) + list(root.rglob("index.typ"))
+    for path in sorted(candidates):
         if is_watched(path, root):
             render(path, root, force=force, kinds=kinds)
 
@@ -132,7 +140,7 @@ def start(root: Path = REPO, force: bool = False) -> threading.Thread:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Render every Markdown file with `target: pdf` or `web`, then watch.")
+    parser = argparse.ArgumentParser(description="Render every index.md and index.typ document, then watch.")
     parser.add_argument("root", nargs="?", type=Path, default=REPO, help="folder to watch (default: the repo)")
     parser.add_argument("--once", action="store_true", help="render what is out of date, then exit")
     parser.add_argument("--force", action="store_true", help="on startup, re-render even up-to-date outputs")

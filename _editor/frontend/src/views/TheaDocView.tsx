@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { EditorView } from '@codemirror/view';
-import { FilePlus, Paperclip, WandSparkles } from 'lucide-react';
+import { Paperclip, WandSparkles } from 'lucide-react';
 import { api } from '@/api';
 import { CodeMirrorHost } from '@/dumb/CodeMirrorHost';
 import { Markdown, type FenceRenderer } from '@/dumb/Markdown';
@@ -11,7 +11,7 @@ import { TheaBlock } from '@/thea/TheaBlock';
 import { deleteFile, docFilesBase, docFilesQuery, fileName, fileReference, uploadFiles } from '@/thea/files';
 import { FilesPanel } from '@/thea/FilesPanel';
 
-type Props = { path: string; navigate: (path: string) => void };
+import type { ViewProps as Props } from './registry';
 
 const FILES_OPEN_KEY = 'thea.filesOpen';
 const readFilesOpen = () => { try { return localStorage.getItem(FILES_OPEN_KEY) !== '0'; } catch { return true; } };
@@ -22,45 +22,17 @@ const docQuery = (doc: string) => ({
 });
 
 /** `thea/<doc>`: the docs under thea/, one open in an editor beside its preview with live viz blocks. */
-export function TheaDocView({ path, navigate }: Props) {
-  const qc = useQueryClient();
+export function TheaDocView({ path, navigate, onDirty }: Props) {
   const docs = useQuery(docsQuery).data;
   const doc = path.split('/')[1] ?? '';
-  const [dirty, setDirty] = useState(false);
 
   // open the first doc when none is named
   useEffect(() => { if (!doc && docs?.length) navigate(`thea/${docs[0]}`); }, [doc, docs, navigate]);
 
-  function open(next: string) {
-    if (dirty && !confirm('Discard unsaved changes?')) return;
-    setDirty(false);
-    navigate(`thea/${next}`);
-  }
-
-  async function create() {
-    const name = prompt('New doc (lowercase letters, digits, - and _):')?.trim();
-    if (!name) return;
-    try {
-      await api('POST', '/api/docs', { name });
-      await qc.invalidateQueries({ queryKey: docsQuery.queryKey });
-      open(name);
-    } catch (e) { showError(e); }
-  }
-
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="navbar min-h-12 gap-2 border-b border-base-300 px-3">
-        <span className="font-semibold">thea</span>
-        <select className="select select-sm w-auto max-w-[50vw]" aria-label="Doc" value={doc} onChange={(e) => open(e.target.value)}>
-          {!doc && <option value="">–</option>}
-          {docs?.map((d) => <option key={d} value={d}>{d}</option>)}
-        </select>
-        <button type="button" className="btn btn-sm btn-ghost btn-square" title="New doc" aria-label="New doc" onClick={() => void create()}>
-          <FilePlus size={16} />
-        </button>
-      </header>
+    <div className="flex min-h-dvh min-w-0 flex-col">
       {doc
-        ? <DocEditor key={doc} doc={doc} onDirty={setDirty} />
+        ? <DocEditor key={doc} doc={doc} onDirty={onDirty} />
         : <p className="p-4 opacity-60">{docs?.length === 0 ? 'No docs yet: create one.' : ''}</p>}
     </div>
   );
