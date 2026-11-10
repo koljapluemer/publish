@@ -8,6 +8,9 @@ target: web
 ## Wie viel Qualität bleibt erhalten, nachdem wir ein *Bild* mit *Algo X* (vs *Algo Y*) komprimiert haben?
 
 ![original|250](./original.jpg)
+
+---
+
 ![deepfried|250](./fried.jpg)
 ![gif|250](./to_gif.jpg)
 
