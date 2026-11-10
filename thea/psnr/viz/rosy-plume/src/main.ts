@@ -12,7 +12,9 @@ const btnPlay = $<HTMLButtonElement>('btn-play');
 const btnReset = $<HTMLButtonElement>('btn-reset');
 const speed = $<HTMLInputElement>('speed');
 const speedOut = $<HTMLOutputElement>('speed-out');
-const readout = $('readout');
+const logEl = $<HTMLOListElement>('log');
+const mseEl = $('mse');
+const LOG_MAX = 40;
 
 // Inferno-like ramp
 const STOPS: [number, number, number][] = [
@@ -102,8 +104,27 @@ async function init() {
     ctx.strokeRect(x - 1, y - 1, px + 2, py + 2);
   }
 
+  let pending: number[] = [];
+
+  function flushLog() {
+    if (pending.length === 0) return;
+    const frag = document.createDocumentFragment();
+    for (const i of pending.slice(-LOG_MAX)) {
+      const li = document.createElement('li');
+      const sw = document.createElement('i');
+      const [r, g, b] = ramp(norm(err[i]));
+      sw.style.background = `rgb(${r},${g},${b})`;
+      li.append(sw, fmt(err[i], 1));
+      frag.append(li);
+    }
+    pending = [];
+    logEl.append(frag);
+    while (logEl.childElementCount > LOG_MAX) logEl.firstElementChild!.remove();
+  }
+
   function processPixel(i: number) {
     sse += err[i];
+    pending.push(i);
     const [r, g, b] = ramp(norm(err[i]));
     errImg.data[i * 4] = r;
     errImg.data[i * 4 + 1] = g;
@@ -118,14 +139,8 @@ async function init() {
     drawKernel(drawPanel(cvB, B.img), active);
     drawKernel(drawPanel(cvD, errCanvas), active);
 
-    if (step === 0) {
-      readout.textContent = '';
-    } else {
-      const mse = sse / step;
-      const psnr = mse === 0 ? '∞' : fmt(10 * Math.log10((255 * 255) / mse), 1);
-      readout.textContent = `PSNR ${psnr} dB`;
-      readout.title = `${fmt(step)} of ${fmt(N)} pixels · MSE ${fmt(mse, 2)}`;
-    }
+    flushLog();
+    mseEl.textContent = step === 0 ? '—' : fmt(sse / step, 1);
 
     btnPlay.textContent = playing ? 'Stop' : step >= N ? 'Replay' : step > 0 ? 'Resume' : 'Start';
     btnReset.disabled = step === 0 && !playing;
@@ -142,6 +157,8 @@ async function init() {
     step = 0;
     sse = 0;
     errImg.data.fill(0);
+    pending = [];
+    logEl.replaceChildren();
   }
 
   function tick(t: number) {
@@ -190,5 +207,6 @@ async function init() {
 }
 
 init().catch((e: unknown) => {
-  readout.textContent = `Could not load images: ${String(e)}`;
+  mseEl.textContent = 'error';
+  console.warn(e);
 });

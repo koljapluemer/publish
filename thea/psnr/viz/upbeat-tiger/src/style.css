@@ -17,6 +17,8 @@
 #chart { display: block; width: 100%; overflow: visible; }
 #chart text { font-family: var(--viz-mono); font-size: 11px; fill: var(--viz-muted); }
 #chart .axis { stroke: var(--viz-fg); stroke-width: 1.5; }
+#chart .end { stroke: var(--viz-fg); stroke-width: 1.5; }
+#chart text.range { fill: var(--viz-muted); }
 #chart .stem { stroke: var(--viz-fg); stroke-opacity: 0.3; stroke-width: 1; }
 #chart .dot { fill: var(--viz-fg); stroke: var(--viz-bg, transparent); }
 #chart text.v { fill: var(--viz-fg); font-size: 12px; font-weight: 600; }

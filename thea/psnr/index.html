@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>psnr</title>
+
+<style>
+:root { --bg: #fff; --fg: #18181b; --muted: #71717a; --border: #e4e4e7; --code: #f4f4f5; --link: #2563eb;
+  color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #18181b; --fg: #f4f4f5; --muted: #a1a1aa; --border: #3f3f46; --code: #27272a; --link: #60a5fa;
+    color-scheme: dark; }
+}
+html { background: var(--bg); color: var(--fg); }
+body { margin: 0 auto; max-width: 70ch; padding: 2rem 16px 4rem; font: 17px/1.6 system-ui, "Noto Sans", sans-serif; }
+h1, h2, h3, h4 { line-height: 1.25; margin: 2em 0 0.6em; }
+h1 { font-size: 2rem; margin-top: 0.5em; }
+header p { color: var(--muted); margin: 0.2em 0; }
+a { color: var(--link); }
+img, video { max-width: 100%; height: auto; }
+figure { margin: 1.5em 0; }
+figcaption { color: var(--muted); font-size: 0.9em; }
+pre, code { font: 0.9em ui-monospace, "DejaVu Sans Mono", monospace; background: var(--code); border-radius: 4px; }
+code { padding: 0.1em 0.3em; }
+pre { padding: 0.8em 1em; overflow-x: auto; }
+pre code { padding: 0; background: none; }
+blockquote { margin: 1em 0; padding-left: 1em; border-left: 3px solid var(--border); color: var(--muted); }
+table { border-collapse: collapse; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--border); padding: 0.3em 0.6em; }
+hr { border: 0; border-top: 1px solid var(--border); }
+math[display="block"] { overflow-x: auto; }
+details { margin: 1em 0; padding: 0.4em 0.8em; border: 1px solid var(--border); border-radius: 6px; }
+details[open] { padding-bottom: 0.8em; }
+summary { cursor: pointer; color: var(--muted); }
+details[open] > summary { margin-bottom: 0.6em; }
+details > summary + * { margin-top: 0; }
+iframe.thea { display: block; width: 100%; height: 300px; border: 0; margin: 1.5em 0; }
+</style>
+</head>
+<body>
+<p>Ich habe die Präsi mit recht vielen interaktiven Visualisierungen als Website gebaut: <a href="https://publish.koljasam.com/thea/psnr/">publish.koljasam.com/thea/psnr</a> Dieses Dokument hier ist ein statischer Export als PDF, für die offizielle Abgabe.</p>
+<h1 id="peak-signal-to-noise-ratio-psnr">Peak Signal-to-Noise Ratio (PSNR)</h1>
+<details>
+<summary>
+Details
+</summary>
+<iframe class="thea" src="viz/serene-yak/index.html" sandbox="allow-scripts" title="serene-yak"></iframe>
+</details>
+<details>
+<summary>
+Details
+</summary>
+<iframe class="thea" src="viz/orange-canyon/index.html" sandbox="allow-scripts" title="orange-canyon"></iframe>
+</details>
+<details>
+<summary>
+Details
+</summary>
+<h2 id="what-are-we-trying-to-answer">What are we trying to answer?</h2>
+<p><em>How well has our image survived the compression we just did</em>?</p>
+<p><img src="./original.jpg" style="max-width: min(250px, 100%)" alt="original" /> <img src="./fried.jpg" style="max-width: min(250px, 100%)" alt="deepfried" /></p>
+</details>
+<details>
+<summary>
+Details
+</summary>
+<iframe class="thea" src="viz/rosy-plume/index.html" sandbox="allow-scripts" title="rosy-plume"></iframe>
+</details>
+<details>
+<summary>
+Details
+</summary>
+<iframe class="thea" src="viz/upbeat-quasar/index.html" sandbox="allow-scripts" title="upbeat-quasar"></iframe>
+</details>
+<details>
+<summary>
+Details
+</summary>
+<iframe class="thea" src="viz/upbeat-tiger/index.html" sandbox="allow-scripts" title="upbeat-tiger"></iframe>
+</details>
+<script>
+// viz iframes report their height and follow the page's theme (the bridge in _editor/template/build.mjs)
+(() => {
+  const frames = () => [...document.querySelectorAll('iframe.thea')];
+  const dark = matchMedia('(prefers-color-scheme: dark)');
+  const theme = (f) => f.contentWindow && f.contentWindow.postMessage({ type: 'theme', mode: dark.matches ? 'dark' : 'light' }, '*');
+  addEventListener('message', (e) => {
+    const d = e.data;
+    if (!d || d.source !== 'thea' || d.type !== 'resize') return;
+    const f = frames().find((f) => f.contentWindow === e.source);
+    if (f && d.height > 0) f.style.height = d.height + 'px';
+  });
+  for (const f of frames()) f.addEventListener('load', () => theme(f));
+  dark.addEventListener('change', () => frames().forEach(theme));
+})();
+</script>
+</body>
+</html>

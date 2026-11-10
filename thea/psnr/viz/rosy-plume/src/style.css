@@ -8,7 +8,6 @@
 }
 .psnr .panels {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: clamp(6px, 2vw, 16px);
 }
 .psnr figure { margin: 0; min-width: 0; }
@@ -27,7 +26,56 @@
   margin-top: 5px;
   line-height: 1.3;
 }
-.psnr .read { font-family: var(--viz-mono); font-size: 11.5px; color: var(--viz-fg); display: block; min-height: 1.4em; }
+.psnr .panels { grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(68px, 0.85fr); }
+.psnr .errs { display: flex; flex-direction: column; }
+.psnr .errs .box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--viz-border);
+  border-radius: 4px;
+  min-height: 0;
+  overflow: hidden;
+}
+.psnr .errs figcaption { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.psnr .log { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+.psnr .log ol {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  margin: 0;
+  padding: 0 6px 2px;
+  list-style: none;
+  font-family: var(--viz-mono);
+  font-size: 11px;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.psnr .log::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 40%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(var(--viz-surface), transparent);
+  opacity: 0.9;
+}
+.psnr .log li { display: flex; align-items: center; justify-content: flex-end; gap: 5px; white-space: nowrap; }
+.psnr .log li i { width: 8px; height: 8px; border-radius: 2px; flex: none; box-shadow: 0 0 0 1px var(--viz-border); }
+.psnr .log li:last-child { color: var(--viz-fg); font-weight: 600; }
+.psnr .log li { color: var(--viz-muted); }
+.psnr .mse {
+  border-top: 1px solid var(--viz-border);
+  padding: 4px 6px 5px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  column-gap: 6px;
+  background: var(--viz-surface);
+}
+.psnr .mse span { font-size: 11px; color: var(--viz-muted); }
+.psnr .mse b { font-family: var(--viz-mono); font-size: 12.5px; font-variant-numeric: tabular-nums; margin-left: auto; }
 
 .psnr .controls {
   display: flex;
