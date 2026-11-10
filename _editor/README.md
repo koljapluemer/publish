@@ -171,7 +171,11 @@ directly with the repository as its Typst root, so local imports and assets can
 use paths relative to the source. It produces a sibling `index.pdf`; only files
 named `index.typ` are entry points, so helper `.typ` files are not compiled on their
 own. The Typst editor shows that PDF beside the source and refreshes it after a
-successful watched render. A failed render leaves the last valid preview visible.
+successful render. Saving compiles synchronously and returns its diagnostic to
+the editor; filesystem watching covers edits made outside the editor. A failed
+render shows its error and leaves the last valid preview visible. The source
+editor provides Typst highlighting, completion, indentation, folding and syntax
+diagnostics.
 
 ## Web
 

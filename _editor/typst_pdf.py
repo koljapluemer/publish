@@ -1,12 +1,16 @@
 """Compile ``typst/<doc>/index.typ`` directly to a sibling PDF."""
 
 import os
+import threading
 from functools import cache
 from pathlib import Path
 
 import typst
 
 from pdf import RenderError
+
+_locks: dict[Path, threading.Lock] = {}
+_locks_guard = threading.Lock()
 
 
 @cache
@@ -25,15 +29,19 @@ def is_stale(source: Path) -> bool:
 
 def render(source: Path, root: Path, force: bool = False) -> Path | None:
     """Compile one Typst entry point, preserving the previous PDF on failure."""
-    if not force and not is_stale(source):
-        return None
-    try:
-        contents = typst.compile(str(source), root=root, font_paths=_fonts())
-    except typst.TypstError as e:
-        raise RenderError(e.diagnostic or e.message) from e
+    source = source.resolve()
+    with _locks_guard:
+        lock = _locks.setdefault(source, threading.Lock())
+    with lock:
+        if not force and not is_stale(source):
+            return None
+        try:
+            contents = typst.compile(str(source), root=root, font_paths=_fonts())
+        except typst.TypstError as e:
+            raise RenderError(e.diagnostic or e.message) from e
 
-    output = pdf_path(source)
-    tmp = output.with_name(f".{output.name}.tmp")
-    tmp.write_bytes(contents)
-    os.replace(tmp, output)
-    return output
+        output = pdf_path(source)
+        tmp = output.with_name(f".{output.name}.tmp")
+        tmp.write_bytes(contents)
+        os.replace(tmp, output)
+        return output

@@ -56,6 +56,15 @@ def _typst_index(doc: str) -> Path:
     return path
 
 
+def _typst_render_state(source: Path) -> dict:
+    output = source.with_suffix(".pdf")
+    name = source.relative_to(TYPST_ROOT.parent).as_posix()
+    return {
+        "pdf_mtime": output.stat().st_mtime if output.is_file() else None,
+        "render": watch.results().get(name, {}).get("pdf"),
+    }
+
+
 @app.get("/api/docs")
 def docs():
     names = sorted(p.parent.name for p in ROOT.glob("*/index.md")) if ROOT.is_dir() else []
@@ -99,9 +108,7 @@ def typst_docs():
 @app.get("/api/typst/<doc>")
 def read_typst(doc):
     source = _typst_index(doc)
-    output = source.with_suffix(".pdf")
-    return jsonify(text=source.read_text(encoding="utf-8"),
-                   pdf_mtime=output.stat().st_mtime if output.is_file() else None)
+    return jsonify(text=source.read_text(encoding="utf-8"), **_typst_render_state(source))
 
 
 @app.put("/api/typst/<doc>")
@@ -113,7 +120,15 @@ def write_typst(doc):
     tmp = path.with_name(".index.typ.tmp")
     tmp.write_text(text, encoding="utf-8")
     tmp.replace(path)
-    return jsonify(text=text)
+    # A save has a deterministic answer: don't make the editor infer completion
+    # from the filesystem watcher's timing. The watcher catches external edits.
+    watch.render(path, TYPST_ROOT.parent, force=True, kinds=("pdf",))
+    return jsonify(text=text, **_typst_render_state(path))
+
+
+@app.get("/api/typst/<doc>/status")
+def typst_render_status(doc):
+    return jsonify(_typst_render_state(_typst_index(doc)))
 
 
 @app.get("/api/typst/<doc>/pdf")

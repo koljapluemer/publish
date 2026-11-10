@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { autocompletion } from '@codemirror/autocomplete';
+import { lintGutter } from '@codemirror/lint';
+import { typst_lezer } from 'codemirror-lang-typst/lezer';
 import { api } from '@/api';
 import { CodeMirrorHost } from '@/dumb/CodeMirrorHost';
 import { showError } from '@/dumb/notice';
 import type { ViewProps } from './registry';
 
-type TypstDocument = { text: string; pdf_mtime: number | null };
 type RenderResult = { ok: boolean; error: string | null; time: number };
-type Status = { render: Record<string, Record<string, RenderResult>> };
+type RenderState = { pdf_mtime: number | null; render: RenderResult | null };
+type TypstDocument = RenderState & { text: string };
+
+const typstExtensions = [typst_lezer(), autocompletion(), lintGutter()];
 
 const listQuery = { queryKey: ['typst'], queryFn: () => api<string[]>('GET', '/api/typst') };
 const docQuery = (doc: string) => ({
@@ -33,25 +38,30 @@ function TypstEditor({ doc, onDirty }: { doc: string; onDirty: (dirty: boolean) 
   const qc = useQueryClient();
   const saved = useQuery(docQuery(doc)).data;
   if (!saved) return <span className="loading loading-spinner m-4" />;
-  return <LoadedTypst doc={doc} saved={saved.text} initialPdf={saved.pdf_mtime}
-                      onSaved={(text) => qc.setQueryData(docQuery(doc).queryKey, { ...saved, text })} onDirty={onDirty} />;
+  return <LoadedTypst doc={doc} saved={saved.text} initialRender={saved}
+                      onSaved={(next) => qc.setQueryData(docQuery(doc).queryKey, next)} onDirty={onDirty} />;
 }
 
-function LoadedTypst({ doc, saved, initialPdf, onSaved, onDirty }: {
-  doc: string; saved: string; initialPdf: number | null; onSaved: (text: string) => void; onDirty: (dirty: boolean) => void;
+function LoadedTypst({ doc, saved, initialRender, onSaved, onDirty }: {
+  doc: string; saved: string; initialRender: RenderState; onSaved: (next: TypstDocument) => void; onDirty: (dirty: boolean) => void;
 }) {
+  const qc = useQueryClient();
   const [draft, setDraft] = useState(saved);
   const [tab, setTab] = useState<'edit' | 'preview'>('edit');
+  const [rendering, setRendering] = useState(false);
   const draftRef = useRef(draft);
   const savedRef = useRef(saved);
   draftRef.current = draft;
   const dirty = draft !== saved;
-  const source = `typst/${doc}/index.typ`;
+  const statusKey = ['typst-status', doc];
   const status = useQuery({
-    queryKey: ['status'], queryFn: () => api<Status>('GET', '/api/status'), refetchInterval: 750,
+    queryKey: statusKey,
+    queryFn: () => api<RenderState>('GET', `/api/typst/${encodeURIComponent(doc)}/status`),
+    initialData: initialRender,
+    refetchInterval: 1500,
   }).data;
-  const rendered = status?.render[source]?.pdf;
-  const pdfVersion = rendered?.ok ? rendered.time : initialPdf;
+  const rendered = status.render;
+  const pdfVersion = status.pdf_mtime;
 
   useEffect(() => onDirty(dirty), [dirty, onDirty]);
   useEffect(() => () => onDirty(false), [onDirty]);
@@ -67,14 +77,16 @@ function LoadedTypst({ doc, saved, initialPdf, onSaved, onDirty }: {
     if (text === savedRef.current) return;
     const before = savedRef.current;
     savedRef.current = text;
+    setRendering(true);
     try {
-      await api('PUT', `/api/typst/${encodeURIComponent(doc)}`, { text });
-      onSaved(text);
+      const next = await api<TypstDocument>('PUT', `/api/typst/${encodeURIComponent(doc)}`, { text });
+      onSaved(next);
+      qc.setQueryData(statusKey, { pdf_mtime: next.pdf_mtime, render: next.render });
     } catch (e) {
       savedRef.current = before;
       showError(e);
-    }
-  }, [doc, onSaved]);
+    } finally { setRendering(false); }
+  }, [doc, onSaved, qc, statusKey]);
 
   const pane = (which: 'edit' | 'preview') => `${tab === which ? 'block' : 'hidden'} md:block min-w-0`;
   return (
@@ -85,12 +97,15 @@ function LoadedTypst({ doc, saved, initialPdf, onSaved, onDirty }: {
           <button type="button" role="tab" className={`tab ${tab === 'edit' ? 'tab-active' : ''}`} onClick={() => setTab('edit')}>Edit</button>
           <button type="button" role="tab" className={`tab ${tab === 'preview' ? 'tab-active' : ''}`} onClick={() => setTab('preview')}>Preview</button>
         </div>
-        {dirty && <span className="status status-warning" title="unsaved: saved when the editor loses focus" aria-label="unsaved changes" />}
+        {rendering
+          ? <span className="loading loading-spinner loading-xs" title="Rendering PDF" aria-label="Rendering PDF" />
+          : dirty && <span className="status status-warning" title="unsaved: saved when the editor loses focus" aria-label="unsaved changes" />}
       </header>
-      {rendered && !rendered.ok && <div className="alert alert-error m-3 mb-0 py-2 text-sm"><span className="whitespace-pre-wrap">{rendered.error}</span></div>}
+      {rendered && !rendered.ok && <div role="alert" className="alert alert-error m-3 mb-0 py-2 text-sm"><span className="whitespace-pre-wrap">{rendered.error}</span></div>}
       <main className="grid flex-1 gap-4 p-3 md:grid-cols-2">
         <div className={pane('edit')}>
-          <CodeMirrorHost value={draft} onChange={setDraft} onSave={() => void save()} onBlur={() => void save()} />
+          <CodeMirrorHost value={draft} extensions={typstExtensions} onChange={setDraft}
+                          onSave={() => void save()} onBlur={() => void save()} />
         </div>
         <div className={`${pane('preview')} min-h-[70vh] overflow-hidden rounded-box border border-base-300 bg-base-100`}>
           {pdfVersion

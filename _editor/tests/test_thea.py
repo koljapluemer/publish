@@ -54,9 +54,19 @@ def test_typst_docs_roundtrip_and_pdf(client, tmp_path, monkeypatch):
     source.parent.mkdir(parents=True)
     source.write_text("= Original")
     assert client.get("/api/typst").json == ["paper"]
-    assert client.get("/api/typst/paper").json == {"text": "= Original", "pdf_mtime": None}
-    assert client.put("/api/typst/paper", json={"text": "= Changed"}).status_code == 200
+    opened = client.get("/api/typst/paper").json
+    assert opened["text"] == "= Original" and opened["pdf_mtime"] is None
+    changed = client.put("/api/typst/paper", json={"text": "= Changed"})
+    assert changed.status_code == 200 and changed.json["render"]["ok"]
+    assert changed.json["pdf_mtime"] is not None
     assert source.read_text() == "= Changed"
+    status = client.get("/api/typst/paper/status").json
+    assert status["render"]["ok"] and status["pdf_mtime"] == changed.json["pdf_mtime"]
+    previous_pdf = source.with_suffix(".pdf").read_bytes()
+    broken = client.put("/api/typst/paper", json={"text": "#not-a-real-function()"}).json
+    assert not broken["render"]["ok"] and broken["render"]["error"]
+    assert broken["pdf_mtime"] == changed.json["pdf_mtime"]
+    assert source.with_suffix(".pdf").read_bytes() == previous_pdf
     source.with_suffix(".pdf").write_bytes(b"%PDF-test")
     response = client.get("/api/typst/paper/pdf")
     assert response.status_code == 200 and response.mimetype == "application/pdf"
