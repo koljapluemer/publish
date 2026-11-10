@@ -2,7 +2,6 @@ import './style.css';
 import baseUrl from '../files/base_small.jpg';
 import friedUrl from '../files/fried_small.jpg';
 
-const K = 5; // kernel size (pixels), stride = K
 const RES = 400; // canvas backing resolution
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -10,19 +9,10 @@ const cvA = $<HTMLCanvasElement>('cv-a');
 const cvB = $<HTMLCanvasElement>('cv-b');
 const cvD = $<HTMLCanvasElement>('cv-d');
 const btnPlay = $<HTMLButtonElement>('btn-play');
-const btnStep = $<HTMLButtonElement>('btn-step');
 const btnReset = $<HTMLButtonElement>('btn-reset');
 const speed = $<HTMLInputElement>('speed');
 const speedOut = $<HTMLOutputElement>('speed-out');
-const kGrid = $('k-grid');
-const kPos = $('k-pos');
-const kSum = $('k-sum');
-const sN = $('s-n');
-const sSse = $('s-sse');
-const sMse = $('s-mse');
-const sPsnr = $('s-psnr');
-const sNote = $('s-note');
-const progBar = $('prog-bar');
+const readout = $('readout');
 
 // Inferno-like ramp
 const STOPS: [number, number, number][] = [
@@ -61,14 +51,13 @@ async function init() {
   const [A, B] = await Promise.all([loadPixels(baseUrl), loadPixels(friedUrl)]);
   const W = Math.min(A.w, B.w), H = Math.min(A.h, B.h);
   const N = W * H;
-  const cols = Math.ceil(W / K), rows = Math.ceil(H / K);
-  const totalSteps = cols * rows;
   const px = RES / W, py = RES / H;
   cvA.height = cvB.height = cvD.height = Math.round(RES * H / W);
+  for (const c of [cvA, cvB, cvD]) c.style.aspectRatio = `${W} / ${H}`;
 
-  // Per-pixel squared error summed over R,G,B
+  // Per-pixel squared error, averaged over R,G,B
   const err = new Float64Array(N);
-  let maxPix = 0;
+  let maxErr = 0;
   for (let i = 0; i < N; i++) {
     const x = i % W, y = Math.floor(i / W);
     const ia = (y * A.w + x) * 4, ib = (y * B.w + x) * 4;
@@ -77,39 +66,24 @@ async function init() {
       const d = A.data[ia + c] - B.data[ib + c];
       s += d * d;
     }
-    err[i] = s;
-    maxPix = Math.max(maxPix, s / 3);
+    err[i] = s / 3;
+    maxErr = Math.max(maxErr, err[i]);
   }
-  const norm = (meanSq: number) => Math.sqrt(meanSq / (maxPix || 1));
+  const norm = (e: number) => Math.sqrt(e / (maxErr || 1));
 
-  // Offscreen error map (filled as the kernel visits pixels)
+  // Offscreen heatmap, filled as the kernel visits pixels
   const errCanvas = document.createElement('canvas');
   errCanvas.width = W; errCanvas.height = H;
   const errCtx = errCanvas.getContext('2d')!;
   const errImg = errCtx.createImageData(W, H);
 
-  // Kernel grid cells
-  kGrid.style.gridTemplateColumns = `repeat(${K}, minmax(0, 1fr))`;
-  const cells: HTMLDivElement[] = [];
-  for (let i = 0; i < K * K; i++) {
-    const d = document.createElement('div');
-    d.className = 'cell';
-    kGrid.appendChild(d);
-    cells.push(d);
-  }
-
-  let step = 0; // number of kernel positions processed
+  let step = 0; // pixels processed
   let sse = 0;
   let playing = false;
   let last = 0;
   let acc = 0;
 
-  function kernelRect(s: number) {
-    const kx = (s % cols) * K, ky = Math.floor(s / cols) * K;
-    return { kx, ky, kw: Math.min(K, W - kx), kh: Math.min(K, H - ky) };
-  }
-
-  function drawImagePanel(cv: HTMLCanvasElement, img: CanvasImageSource) {
+  function drawPanel(cv: HTMLCanvasElement, img: CanvasImageSource) {
     const ctx = cv.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, cv.width, cv.height);
@@ -117,140 +91,71 @@ async function init() {
     return ctx;
   }
 
-  function drawKernel(ctx: CanvasRenderingContext2D, s: number) {
-    if (s < 0 || s >= totalSteps) return;
-    const { kx, ky, kw, kh } = kernelRect(s);
-    const x = kx * px, y = ky * py, w = kw * px, h = kh * py;
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-    ctx.strokeRect(x, y, w, h);
-    ctx.lineWidth = 3;
+  function drawKernel(ctx: CanvasRenderingContext2D, i: number) {
+    if (i < 0 || i >= N) return;
+    const x = (i % W) * px, y = Math.floor(i / W) * py;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+    ctx.strokeRect(x - 2, y - 2, px + 4, py + 4);
+    ctx.lineWidth = 2;
     ctx.strokeStyle = '#fff';
-    ctx.strokeRect(x, y, w, h);
+    ctx.strokeRect(x - 1, y - 1, px + 2, py + 2);
   }
 
-  function processStep(s: number) {
-    const { kx, ky, kw, kh } = kernelRect(s);
-    for (let y = ky; y < ky + kh; y++) {
-      for (let x = kx; x < kx + kw; x++) {
-        const i = y * W + x;
-        sse += err[i];
-        const [r, g, b] = ramp(norm(err[i] / 3));
-        errImg.data.set([r, g, b, 255], i * 4);
-      }
-    }
-    errCtx.putImageData(errImg, 0, 0);
+  function processPixel(i: number) {
+    sse += err[i];
+    const [r, g, b] = ramp(norm(err[i]));
+    errImg.data[i * 4] = r;
+    errImg.data[i * 4 + 1] = g;
+    errImg.data[i * 4 + 2] = b;
+    errImg.data[i * 4 + 3] = 255;
   }
 
   function render() {
-    const shown = step > 0 ? step - 1 : -1; // last processed kernel
-    const active = step >= totalSteps ? -1 : Math.max(0, shown);
+    errCtx.putImageData(errImg, 0, 0);
+    const active = playing || (step > 0 && step < N) ? Math.min(step, N) - 1 : -1;
+    drawKernel(drawPanel(cvA, A.img), active);
+    drawKernel(drawPanel(cvB, B.img), active);
+    drawKernel(drawPanel(cvD, errCanvas), active);
 
-    const ca = drawImagePanel(cvA, A.img);
-    drawKernel(ca, active);
-    const cb = drawImagePanel(cvB, B.img);
-    drawKernel(cb, active);
-    const cd = drawImagePanel(cvD, errCanvas);
-    drawKernel(cd, active);
-
-    // Kernel detail
-    if (shown >= 0) {
-      const { kx, ky, kw, kh } = kernelRect(shown);
-      kPos.textContent = `x ${kx}–${kx + kw - 1}, y ${ky}–${ky + kh - 1}`;
-      let ks = 0;
-      for (let j = 0; j < K; j++) {
-        for (let i = 0; i < K; i++) {
-          const cell = cells[j * K + i];
-          if (i < kw && j < kh) {
-            const e = err[(ky + j) * W + kx + i];
-            ks += e;
-            const m = e / 3;
-            const [r, g, b] = ramp(norm(m));
-            cell.style.background = `rgb(${r},${g},${b})`;
-            cell.style.color = 0.299 * r + 0.587 * g + 0.114 * b > 140 ? '#111' : '#fff';
-            cell.textContent = m < 10 ? m.toFixed(1) : String(Math.round(m));
-            cell.title = `pixel (${kx + i}, ${ky + j}): mean squared error ${fmt(m, 1)}`;
-          } else {
-            cell.style.background = '';
-            cell.style.color = '';
-            cell.textContent = '';
-          }
-        }
-      }
-      kSum.textContent = fmt(ks);
+    if (step === 0) {
+      readout.textContent = '';
     } else {
-      kPos.textContent = '—';
-      kSum.textContent = '—';
-      for (const c of cells) {
-        c.style.background = '';
-        c.style.color = '';
-        c.textContent = '';
-        c.title = '';
-      }
+      const mse = sse / step;
+      const psnr = mse === 0 ? '∞' : fmt(10 * Math.log10((255 * 255) / mse), 1);
+      readout.textContent = `PSNR ${psnr} dB`;
+      readout.title = `${fmt(step)} of ${fmt(N)} pixels · MSE ${fmt(mse, 2)}`;
     }
 
-    // Stats
-    let n = 0;
-    for (let s = 0; s < step; s++) {
-      const r = kernelRect(s);
-      n += r.kw * r.kh;
-    }
-    sN.textContent = `${fmt(n)} / ${fmt(N)}`;
-    sSse.textContent = fmt(sse);
-    if (n > 0) {
-      const mse = sse / (n * 3);
-      sMse.textContent = fmt(mse, 2);
-      sPsnr.textContent = mse === 0 ? '∞ dB' : `${fmt(10 * Math.log10((255 * 255) / mse), 2)} dB`;
-    } else {
-      sMse.textContent = '—';
-      sPsnr.textContent = '—';
-    }
-    progBar.style.width = `${(step / totalSteps) * 100}%`;
-
-    if (step >= totalSteps) {
-      sNote.textContent = `Done: all ${fmt(N)} pixels compared. Higher PSNR means the compressed image is closer to the original; ~30–40 dB is typical for lossy compression.`;
-    } else if (step === 0) {
-      sNote.textContent = `Press Start to slide the ${K}×${K} kernel across both images.`;
-    } else {
-      sNote.textContent = 'Running value over the pixels compared so far.';
-    }
-
-    btnPlay.textContent = playing ? 'Pause' : step >= totalSteps ? 'Replay' : step > 0 ? 'Resume' : 'Start';
-    btnStep.disabled = step >= totalSteps;
-    btnReset.disabled = step === 0;
+    btnPlay.textContent = playing ? 'Stop' : step >= N ? 'Replay' : step > 0 ? 'Resume' : 'Start';
+    btnReset.disabled = step === 0 && !playing;
   }
 
-  const stepsPerSec = () => 0.5 * Math.pow(120, Number(speed.value) / 100); // 0.5 … 60
+  // 1 … 2000 pixels per second, log scale
+  const pxPerSec = () => Math.pow(2000, Number(speed.value) / 100);
   function updateSpeedLabel() {
-    const v = stepsPerSec();
-    speedOut.textContent = `${v < 10 ? fmt(v, 1) : fmt(v)} steps/s`;
-  }
-
-  function advance() {
-    if (step >= totalSteps) return;
-    processStep(step);
-    step++;
+    const v = pxPerSec();
+    speedOut.textContent = `${fmt(v < 10 ? v : v < 100 ? Math.round(v) : Math.round(v / 10) * 10, v < 10 ? 1 : 0)} px/s`;
   }
 
   function reset() {
     step = 0;
     sse = 0;
     errImg.data.fill(0);
-    errCtx.clearRect(0, 0, W, H);
   }
 
   function tick(t: number) {
     if (!playing) return;
     const dt = Math.min(0.25, (t - last) / 1000);
     last = t;
-    acc += dt * stepsPerSec();
+    acc += dt * pxPerSec();
     let changed = false;
-    while (acc >= 1 && step < totalSteps) {
+    while (acc >= 1 && step < N) {
       acc -= 1;
-      advance();
+      processPixel(step++);
       changed = true;
     }
-    if (step >= totalSteps) {
+    if (step >= N) {
       playing = false;
       changed = true;
     }
@@ -259,7 +164,7 @@ async function init() {
   }
 
   function play() {
-    if (step >= totalSteps) reset();
+    if (step >= N) reset();
     playing = true;
     acc = 1; // take first step immediately
     last = performance.now();
@@ -273,11 +178,6 @@ async function init() {
       render();
     } else play();
   });
-  btnStep.addEventListener('click', () => {
-    playing = false;
-    advance();
-    render();
-  });
   btnReset.addEventListener('click', () => {
     playing = false;
     reset();
@@ -290,5 +190,5 @@ async function init() {
 }
 
 init().catch((e: unknown) => {
-  sNote.textContent = `Could not load images: ${String(e)}`;
+  readout.textContent = `Could not load images: ${String(e)}`;
 });

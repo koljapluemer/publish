@@ -10,7 +10,7 @@
     </figure>
     <figure>
       <canvas id="cv-diff" class="diff" width="400" height="400" aria-label="Collected squared differences"></canvas>
-      <figcaption>Squared error <span class="sym">(I−K)²</span></figcaption>
+      <figcaption>Collected <span class="sym">Σ<sub>c</sub>(I−K)²</span></figcaption>
     </figure>
   </div>
 
@@ -19,8 +19,8 @@
     <button id="btn-reset" type="button">Reset</button>
     <label class="speed">
       <span>Speed</span>
-      <input id="speed" type="range" min="1" max="60" step="1" value="6">
-      <output id="speed-out">6 steps/s</output>
+      <input id="speed" type="range" min="0" max="100" step="1" value="30" aria-label="Kernel speed">
+      <output id="speed-out"></output>
     </label>
   </div>
 
@@ -28,20 +28,24 @@
   <div class="status" id="status"></div>
 
   <div class="kernel">
-    <div class="kernel-head">Current kernel <span id="kpos" class="mono"></span></div>
+    <div class="kernel-head">1×1 kernel at <span id="kpos" class="mono"></span></div>
     <div class="kernel-row">
-      <div class="patch"><canvas id="pk-base" width="5" height="5"></canvas><span>I</span></div>
+      <div class="patch"><i id="sw-base"></i><span>I</span></div>
       <div class="op">−</div>
-      <div class="patch"><canvas id="pk-fried" width="5" height="5"></canvas><span>K</span></div>
-      <div class="op">→</div>
-      <div class="grid-wrap">
-        <div id="kgrid" class="kgrid"></div>
-        <span>mean squared error per pixel (over R,G,B)</span>
-      </div>
+      <div class="patch"><i id="sw-fried"></i><span>K</span></div>
+      <div class="op arrow">→</div>
+      <table class="rgb">
+        <thead><tr><th></th><th><i>I</i></th><th><i>K</i></th><th><i>I</i>−<i>K</i></th><th>(<i>I</i>−<i>K</i>)²</th></tr></thead>
+        <tbody id="rgb-body"></tbody>
+        <tfoot><tr><th colspan="4">Σ over R, G, B</th><td id="rgb-sum"></td></tr></tfoot>
+      </table>
     </div>
   </div>
 
   <div class="formulas">
+    <div class="f" id="f-def"></div>
+    <div class="f" id="f-term"></div>
+    <div class="f" id="f-sse"></div>
     <div class="f" id="f-mse"></div>
     <div class="f" id="f-psnr"></div>
   </div>

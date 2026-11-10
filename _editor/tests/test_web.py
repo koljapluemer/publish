@@ -53,7 +53,8 @@ def test_renders_page_with_vizzes_and_relative_images(tmp_path):
     source = _doc(tmp_path, "target: web", BODY)
     _viz(source, "brisk-river")
     output = web.render_if_targeted(source, tmp_path)
-    assert output == source.with_suffix(".html")
+    assert output == tmp_path / "_site" / "doc" / "index.html"
+    assert not source.with_suffix(".html").exists()
     page = output.read_text(encoding="utf-8")
     assert "<title>Hello *world*</title>" in page
     assert 'src="photo.jpg"' in page and 'src="./other.png"' in page
@@ -72,7 +73,7 @@ def test_frontmatter_title_is_shown(tmp_path):
 def test_not_targeted(tmp_path):
     source = _doc(tmp_path, "target: pdf", "Hi\n")
     assert web.render_if_targeted(source, tmp_path) is None
-    assert not source.with_suffix(".html").exists()
+    assert not (tmp_path / "_site").exists()
 
 
 def test_renders_once_until_changed_or_forced(tmp_path):
@@ -90,4 +91,35 @@ def test_watch_records_each_kind(tmp_path):
     watch.render(source, tmp_path)
     result = watch.results()["doc/index.md"]
     assert result["web"]["ok"] and result["pdf"]["ok"]
-    assert source.with_suffix(".html").exists() and source.with_suffix(".pdf").exists()
+    assert (tmp_path / "_site" / "doc" / "index.html").exists() and source.with_suffix(".pdf").exists()
+
+
+def test_copies_only_the_files_the_page_links(tmp_path):
+    body = ("![](photo.jpg) [data](rain.csv) [shared](../shared/logo.svg) [out](../../outside.txt)\n\n"
+            "[web](https://example.com/x.png) [anchor](#top) ![](missing.png)\n\n```thea brisk-river\nA chart.\n```\n")
+    source = _doc(tmp_path / "repo", "target: web", body)
+    root = tmp_path / "repo"
+    _viz(source, "brisk-river")
+    (source.parent / "viz" / "brisk-river" / "meta.json").write_text("{}")
+    for name in ("photo.jpg", "rain.csv", "unused.png"):
+        (source.parent / name).write_bytes(b"x")
+    (root / "shared").mkdir()
+    (root / "shared" / "logo.svg").write_text("<svg/>")
+    (tmp_path / "outside.txt").write_text("secret")
+
+    web.render_if_targeted(source, root)
+    site = root / "_site"
+    published = sorted(p.relative_to(site).as_posix() for p in site.rglob("*") if p.is_file())
+    assert published == ["doc/index.html", "doc/photo.jpg", "doc/rain.csv",
+                         "doc/viz/brisk-river/index.html", "shared/logo.svg"]
+
+
+def test_changed_file_makes_page_stale(tmp_path):
+    source = _doc(tmp_path, "target: web", "![](photo.jpg)\n")
+    photo = source.parent / "photo.jpg"
+    photo.write_bytes(b"old")
+    web.render_if_targeted(source, tmp_path)
+    assert web.render_if_targeted(source, tmp_path) is None
+    photo.write_bytes(b"newer")
+    assert web.render_if_targeted(source, tmp_path) is not None
+    assert (tmp_path / "_site" / "doc" / "photo.jpg").read_bytes() == b"newer"

@@ -1,0 +1,9 @@
+# The site is _site/, built by `just export` (see _editor/README.md, "Web").
+# Pages are at their path in the repo: thea/psnr/index.md -> /thea/psnr/
+[build]
+  command = "pip install --quiet uv && uv run --project _editor --no-dev python _editor/watch.py --once --force --only web"
+  publish = "_site"
+
+[build.environment]
+  # watch.py and pandoc (pypandoc-binary) run on uv's own Python
+  UV_PYTHON = "3.13"

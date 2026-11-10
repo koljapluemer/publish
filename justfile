@@ -19,10 +19,18 @@ render *args:
 
 alias pdf := render
 
-# serve a doc's folder (its web page, files and vizzes) as the static site it deploys as, on http://127.0.0.1:8000
-site doc port="8000":
-    uv run --project {{editor_dir}} python {{editor_dir}}/watch.py --once
-    uv run --project {{editor_dir}} python -m http.server {{port}} --bind 127.0.0.1 -d {{dir}}/thea/{{doc}}
+# build the static site from scratch into _site/: every `target: web` doc, with only the files its page links (Netlify runs this)
+export:
+    rm -rf {{dir}}/_site
+    uv run --project {{editor_dir}} --no-dev python {{editor_dir}}/watch.py --once --force --only web
+
+# serve _site/ as it deploys, on http://127.0.0.1:8000 (e.g. /thea/psnr/)
+site port="8000": export
+    uv run --project {{editor_dir}} python -m http.server {{port}} --bind 127.0.0.1 -d {{dir}}/_site
+
+# build and deploy _site/ to Netlify from here, without the git integration (`npx netlify-cli login` and `link` once)
+deploy *args: export
+    npx --yes netlify-cli deploy --no-build --dir {{dir}}/_site {{args}}
 
 editor-build:
     npm --prefix {{editor_dir}}/frontend ci

@@ -1,9 +1,9 @@
 {
-  "spec": "Demonstrate how decibel work in the abstract.\nOffer an input field for numbers.\nShow a simple number-line where this number gets converted to decibel, showcasing how decibel 'shrinks the range'.\nShow just that, don't add explanatory labels or titles",
+  "spec": "Demonstrate how decibel work in the abstract.\nOffer an input field for numbers.\nShow a simple number-line where this number gets converted to decibel, showcasing how decibel 'shrinks the range'. Show only the decibel number line (not e.g. a second one with the OG values).\nMake sure the number line only reacts after user submits their number and does not jump before that. Do not add any markers on the number lines except relating to what user explicitly added.\nPermanently add the numbers the user adds, until page reload.\nShow just that, don't add explanatory labels or titles.",
   "model": null,
-  "created": "2026-11-10T13:14:52+0100",
-  "cost_usd": 0.2864,
-  "turns": 21,
-  "session": "07a8b5cc-2cad-4e81-b7ad-822eff7218d8",
+  "created": "2026-11-10T13:26:05+0100",
+  "cost_usd": 0.2022,
+  "turns": 12,
+  "session": "8a6d8064-bd4b-4f9d-93a6-601da36cea9d",
   "generator": "publish-thea-2"
 }

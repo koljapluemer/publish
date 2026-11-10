@@ -4,7 +4,7 @@ Two things in one process:
 
 - In the background, every `.md` in the repo whose frontmatter `target` has
   `pdf` is rendered to a PDF next to it, and one with `web` to an HTML page
-  next to it, on startup if it's out of date and whenever it changes (see
+  in the site folder `_site/`, on startup if it's out of date and whenever it changes (see
   [PDF](#pdf) and [Web](#web)).
 - A local editor for the Markdown docs under `thea/`, with viz blocks: a fenced
   block whose info string is `thea` holds the spec of an interactive
@@ -23,7 +23,9 @@ just editor-check    # lint, typecheck, build, test
 just render          # only the PDFs and pages: catch up, then watch (alias: just pdf)
 just render --once   # catch up, then exit (--force: re-render everything)
 just render ~/notes  # watch a different folder
-just site psnr       # render, then serve thea/psnr/ as its static site on :8000
+just export          # build _site/ from scratch: the static site of every `target: web` doc
+just site            # export, then serve _site/ on :8000 (e.g. /thea/psnr/)
+just deploy          # export, then deploy _site/ to Netlify from here (--prod for production)
 ```
 
 The CLI command is `claude`, or `$THEA_CLI`. The server listens on localhost
@@ -33,7 +35,6 @@ only: generating runs code as you.
 
 ```
 thea/<doc>/index.md            the doc
-thea/<doc>/index.html          its web page, with `target: web` (generated, see Web)
 thea/<doc>/rain.csv …          its files (data, images, fonts), flat next to it
 thea/<doc>/viz/<name>/         one viz, generated, committed
   src/ package.json …          its sources
@@ -156,27 +157,46 @@ kind (`pdf`, `web`).
 
 ## Web
 
-A doc with `web` in its frontmatter `target` is rendered by `web.py` to
-`index.html` next to its `index.md`, so the doc's folder is its static site:
+A doc with `web` in its frontmatter `target` is rendered by `web.py` into the
+site folder `_site/` (gitignored), at the doc's path in the repo, with the local
+files the page links copied along:
 
 ```
-thea/psnr/
-  index.html                   the page
-  original.jpg …               its files, linked relatively
-  viz/serene-yak/index.html    each viz, in an iframe
+_site/thea/psnr/
+  index.html                   the page of thea/psnr/index.md
+  original.jpg …               the files it links (images, `[data](rain.csv)`)
+  viz/serene-yak/index.html    each viz shown, in an iframe
 ```
+
+Only what the page links is published: not the `.md`, not unlinked files, not
+the vizzes' sources, thumbnails or `meta.json`. A link may leave the doc's
+folder (`../shared/logo.svg` lands at `_site/thea/shared/logo.svg`) but not the
+repo or a hidden folder. A page is re-rendered when its doc, the template or a
+linked file changes. Files dropped from a page stay in `_site/` until the next
+`just export`, which builds it from scratch.
 
 Each `thea` block becomes `<iframe sandbox="allow-scripts"
 src="viz/<name>/index.html">`, sized by the height the viz reports and given
 the page's light or dark theme. A block whose viz isn't built is left out (it
 is re-rendered after the viz's first build). The rest is pandoc's Markdown to
 HTML (`web-template/page.html`, MathML for `$math$`), with no request
-outside the folder. Images keep their relative paths. Frontmatter `title`,
+outside the site. Links keep their relative paths. Frontmatter `title`,
 `subtitle`, `author`, `date`, `lang` and `description` are used.
 
-Deploy by copying the folder to any static host (the vizzes' sources come
-along, harmlessly); `just site <doc>` serves it locally. A static host sends no
-CSP header, so the iframe's sandbox is what isolates a viz there.
+### Deploying
+
+`_site/` is a plain static site, so any host works. For Netlify, the repo's
+`netlify.toml` builds it with `watch.py --once --force --only web` (uv brings
+its own Python, pandoc comes with `pypandoc-binary`) and publishes `_site/`:
+connect the repo in Netlify and every push to `main` deploys. Without the git
+integration, `just deploy` builds locally and uploads (a draft URL;
+`just deploy --prod` for the live one), after `npx netlify-cli login` and
+`npx netlify-cli link` once.
+
+URLs follow the repo: `thea/psnr/index.md` is `https://<site>/thea/psnr/`.
+Vizzes are never built during a deploy: their `viz/<name>/index.html` is
+committed. A static host sends no CSP header, so the iframe's sandbox is what
+isolates a viz there.
 
 ### Frontmatter
 

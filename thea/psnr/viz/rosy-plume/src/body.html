@@ -2,47 +2,25 @@
   <div class="panels">
     <figure>
       <canvas id="cv-a" width="400" height="400" aria-label="Original image"></canvas>
-      <figcaption>Original <span class="tag">A</span></figcaption>
+      <figcaption>Original</figcaption>
     </figure>
     <figure>
       <canvas id="cv-b" width="400" height="400" aria-label="Compressed image"></canvas>
-      <figcaption>Compressed <span class="tag">B</span></figcaption>
+      <figcaption>Compressed</figcaption>
     </figure>
     <figure>
-      <canvas id="cv-d" width="400" height="400" aria-label="Squared error map"></canvas>
-      <figcaption>Squared error (A−B)²</figcaption>
+      <canvas id="cv-d" width="400" height="400" aria-label="Squared difference heatmap"></canvas>
+      <figcaption>Difference² <span class="read" id="readout"></span></figcaption>
     </figure>
   </div>
 
   <div class="controls">
     <button id="btn-play" class="primary" type="button">Start</button>
-    <button id="btn-step" type="button">Step</button>
     <button id="btn-reset" type="button">Reset</button>
     <label class="speed">
       <span>Speed</span>
-      <input id="speed" type="range" min="0" max="100" value="45" />
+      <input id="speed" type="range" min="0" max="100" value="55" />
       <output id="speed-out">—</output>
     </label>
-  </div>
-
-  <div class="lower">
-    <section class="kernel">
-      <div class="head">
-        <span>Kernel at <b id="k-pos">—</b></span>
-        <span class="muted">mean of R,G,B squared error</span>
-      </div>
-      <div id="k-grid" class="kgrid"></div>
-      <div class="ksum">Added to Σ (all 3 channels) <b id="k-sum">—</b></div>
-    </section>
-    <section class="stats">
-      <div class="progress"><div id="prog-bar"></div></div>
-      <dl>
-        <div><dt>Pixels compared</dt><dd id="s-n">0 / 0</dd></div>
-        <div><dt>Sum of squared errors</dt><dd id="s-sse">0</dd></div>
-        <div><dt>MSE = Σ / (N·3)</dt><dd id="s-mse">—</dd></div>
-        <div class="big"><dt>PSNR = 10·log₁₀(255² / MSE)</dt><dd id="s-psnr">—</dd></div>
-      </dl>
-      <p class="note" id="s-note">Press Start to slide the kernel across both images.</p>
-    </section>
   </div>
 </div>

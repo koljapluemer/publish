@@ -1,5 +1,4 @@
 .psnr {
-  --heat: #ef4444;
   color: var(--viz-fg);
   font-family: var(--viz-font);
   display: flex;
@@ -28,14 +27,7 @@
   margin-top: 5px;
   line-height: 1.3;
 }
-.psnr .tag {
-  font-family: var(--viz-mono);
-  font-size: 11px;
-  border: 1px solid var(--viz-border);
-  border-radius: 3px;
-  padding: 0 4px;
-  margin-left: 2px;
-}
+.psnr .read { font-family: var(--viz-mono); font-size: 11.5px; color: var(--viz-fg); display: block; min-height: 1.4em; }
 
 .psnr .controls {
   display: flex;
@@ -67,84 +59,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex: 1 1 200px;
-  min-width: 0;
+  flex: 1 1 240px;
+  min-width: min(100%, 240px);
   font-size: 13px;
   color: var(--viz-muted);
 }
 .psnr .speed input { flex: 1; min-width: 80px; accent-color: var(--viz-accent); }
-.psnr .speed output { font-family: var(--viz-mono); font-size: 12px; min-width: 7.5em; text-align: right; color: var(--viz-fg); }
-
-.psnr .lower {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
-  gap: 16px;
-}
-@media (max-width: 560px) {
-  .psnr .lower { grid-template-columns: minmax(0, 1fr); }
-}
-.psnr section {
-  border: 1px solid var(--viz-border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  min-width: 0;
-}
-.psnr .head {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: 2px 8px;
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-.psnr .head b { font-family: var(--viz-mono); font-weight: 600; }
-.psnr .muted { color: var(--viz-muted); font-size: 12px; }
-.psnr .kgrid {
-  display: grid;
-  gap: 2px;
-  max-width: 230px;
-}
-.psnr .kgrid .cell {
-  aspect-ratio: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--viz-mono);
-  font-size: clamp(9px, 2.6vw, 12px);
-  border-radius: 3px;
-  background: var(--viz-surface);
-  color: var(--viz-fg);
-  position: relative;
-  overflow: hidden;
-}
-.psnr .kgrid .cell span { position: relative; }
-.psnr .kgrid .cell i {
-  position: absolute; inset: 0;
-  background: var(--heat);
-}
-.psnr .ksum { margin-top: 8px; font-size: 13px; color: var(--viz-muted); }
-.psnr .ksum b { color: var(--viz-fg); font-family: var(--viz-mono); font-weight: 600; }
-
-.psnr .progress {
-  height: 4px;
-  background: var(--viz-surface);
-  border-radius: 2px;
-  overflow: hidden;
-  margin-bottom: 10px;
-}
-.psnr .progress div { height: 100%; width: 0; background: var(--viz-accent); }
-.psnr dl { margin: 0; display: flex; flex-direction: column; gap: 6px; }
-.psnr dl > div {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 10px;
-  font-size: 13px;
-  border-bottom: 1px dashed var(--viz-border);
-  padding-bottom: 5px;
-}
-.psnr dt { color: var(--viz-muted); }
-.psnr dd { margin: 0; font-family: var(--viz-mono); white-space: nowrap; }
-.psnr dl > div.big { border-bottom: 0; }
-.psnr dl > div.big dd { font-size: 20px; font-weight: 600; color: var(--viz-accent); }
-.psnr .note { margin: 6px 0 0; font-size: 12.5px; color: var(--viz-muted); line-height: 1.4; }
+.psnr .speed output { font-family: var(--viz-mono); font-size: 12px; min-width: 6.5em; text-align: right; color: var(--viz-fg); }

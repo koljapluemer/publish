@@ -1,7 +1,7 @@
 """Watching the repo in the background: every `.md` whose frontmatter `target`
 has `pdf` is rendered to a PDF next to it (pdf.py), and one with `web` to an
-HTML page next to it (web.py), when it changes, and on startup when it's out of
-date. The editor starts this (app.py); `python watch.py` runs it alone."""
+HTML page in the site folder `_site/` (web.py), when it changes, and on startup
+when it's out of date. The editor starts this (app.py); `python watch.py` runs it alone."""
 
 import argparse
 import logging
@@ -23,8 +23,8 @@ RENDERERS = {"pdf": pdf.render_if_targeted, "web": web.render_if_targeted}
 REPO = Path(__file__).resolve().parent.parent
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 DEBOUNCE_SECONDS = 0.3
-# besides hidden folders; `viz/` holds the generated sources of thea vizzes
-IGNORED_DIRS = {"node_modules", "viz"}
+# besides hidden folders; `viz/` holds the generated sources of thea vizzes, `_site/` the web pages
+IGNORED_DIRS = {"node_modules", "viz", web.SITE}
 
 # the last render of each file, by path relative to the root, then by kind: ok, error, time
 _results: dict[str, dict[str, dict]] = {}
@@ -98,10 +98,10 @@ def render(path: Path, root: Path = REPO, force: bool = False, kinds=tuple(RENDE
                 _record(name, kind, None)
 
 
-def render_all(root: Path, force: bool = False) -> None:
+def render_all(root: Path, force: bool = False, kinds=tuple(RENDERERS)) -> None:
     for path in sorted(root.rglob("*.md")):
         if is_watched(path, root):
-            render(path, root, force=force)
+            render(path, root, force=force, kinds=kinds)
 
 
 def watch(root: Path, force: bool = False, stop: threading.Event | None = None) -> None:
@@ -136,12 +136,13 @@ def main() -> None:
     parser.add_argument("root", nargs="?", type=Path, default=REPO, help="folder to watch (default: the repo)")
     parser.add_argument("--once", action="store_true", help="render what is out of date, then exit")
     parser.add_argument("--force", action="store_true", help="on startup, re-render even up-to-date outputs")
+    parser.add_argument("--only", choices=sorted(RENDERERS), help="render only PDFs or only web pages (with --once)")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt="%H:%M:%S")
 
     root = args.root.resolve()
     if args.once:
-        render_all(root, force=args.force)
+        render_all(root, force=args.force, kinds=(args.only,) if args.only else tuple(RENDERERS))
         return
     try:
         watch(root, force=args.force)
