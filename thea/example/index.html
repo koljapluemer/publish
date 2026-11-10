@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Example</title>
+
+<style>
+:root { --bg: #fff; --fg: #18181b; --muted: #71717a; --border: #e4e4e7; --code: #f4f4f5; --link: #2563eb;
+  color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #18181b; --fg: #f4f4f5; --muted: #a1a1aa; --border: #3f3f46; --code: #27272a; --link: #60a5fa;
+    color-scheme: dark; }
+}
+html { background: var(--bg); color: var(--fg); }
+body { margin: 0 auto; max-width: 70ch; padding: 2rem 16px 4rem; font: 17px/1.6 system-ui, "Noto Sans", sans-serif; }
+h1, h2, h3, h4 { line-height: 1.25; margin: 2em 0 0.6em; }
+h1 { font-size: 2rem; margin-top: 0.5em; }
+header p { color: var(--muted); margin: 0.2em 0; }
+a { color: var(--link); }
+img, video { max-width: 100%; height: auto; }
+figure { margin: 1.5em 0; }
+figcaption { color: var(--muted); font-size: 0.9em; }
+pre, code { font: 0.9em ui-monospace, "DejaVu Sans Mono", monospace; background: var(--code); border-radius: 4px; }
+code { padding: 0.1em 0.3em; }
+pre { padding: 0.8em 1em; overflow-x: auto; }
+pre code { padding: 0; background: none; }
+blockquote { margin: 1em 0; padding-left: 1em; border-left: 3px solid var(--border); color: var(--muted); }
+table { border-collapse: collapse; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--border); padding: 0.3em 0.6em; }
+hr { border: 0; border-top: 1px solid var(--border); }
+math[display="block"] { overflow-x: auto; }
+iframe.thea { display: block; width: 100%; height: 300px; border: 0; margin: 1.5em 0; }
+</style>
+</head>
+<body>
+<h1 id="example">Example</h1>
+<p>A doc with a viz block. The fence holds the spec; the editor’s preview shows the built viz.</p>
+<iframe class="thea" src="viz/brisk-river/index.html" sandbox="allow-scripts" title="brisk-river"></iframe>
+<script>
+// viz iframes report their height and follow the page's theme (the bridge in _editor/template/build.mjs)
+(() => {
+  const frames = () => [...document.querySelectorAll('iframe.thea')];
+  const dark = matchMedia('(prefers-color-scheme: dark)');
+  const theme = (f) => f.contentWindow && f.contentWindow.postMessage({ type: 'theme', mode: dark.matches ? 'dark' : 'light' }, '*');
+  addEventListener('message', (e) => {
+    const d = e.data;
+    if (!d || d.source !== 'thea' || d.type !== 'resize') return;
+    const f = frames().find((f) => f.contentWindow === e.source);
+    if (f && d.height > 0) f.style.height = d.height + 'px';
+  });
+  for (const f of frames()) f.addEventListener('load', () => theme(f));
+  dark.addEventListener('change', () => frames().forEach(theme));
+})();
+</script>
+</body>
+</html>

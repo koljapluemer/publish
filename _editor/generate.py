@@ -21,6 +21,7 @@ from functools import cache
 from pathlib import Path
 
 import thea
+import watch
 
 HERE = Path(__file__).parent
 ROOT = HERE.parent / "thea"
@@ -244,6 +245,8 @@ def _run(job: Job, spec: str, problems: list[str]) -> None:
         "spec": spec, "model": settings["model"] or None, "created": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
         "cost_usd": job.cost_usd, "turns": result.get("num_turns"), "session": session, "generator": GENERATOR,
     })
+    # a doc's web page shows only the vizzes built when it was rendered
+    watch.render(doc_dir(job.doc) / "index.md", watch.REPO, force=True, kinds=("web",))
 
 
 def _workspace(key: str, seed: Path) -> Path:
@@ -285,6 +288,9 @@ def files_md(files: list[Path]) -> str:
     for p in files:
         size = p.stat().st_size
         out.append(f"## {p.name}\n\n{size:,} bytes")
+        if size > thea.MAX_BUILT_BYTES:
+            out[-1] += (f" (too large to inline: the built page may be {thea.MAX_BUILT_BYTES // 1024 // 1024} MB"
+                        " at most, so don't import it whole)")
         ext = p.suffix[1:].lower()
         try:
             if ext in ("csv", "tsv", "txt", "md", "svg"):

@@ -86,7 +86,8 @@ def test_files_roundtrip(client, tmp_path):
     assert client.get("/api/docs/doc/files").json == []
     r = _upload(client, ("rain.csv", b"month,mm\n1,40\n"), ("photo.png", b"\x89PNG"))
     assert r.status_code == 201
-    assert r.json == [{"name": "photo.png", "size": 4}, {"name": "rain.csv", "size": 14}]
+    assert [(f["name"], f["size"]) for f in r.json] == [("photo.png", 4), ("rain.csv", 14)]
+    assert all(isinstance(f["mtime"], int) for f in r.json)
     assert (tmp_path / "doc" / "rain.csv").read_bytes() == b"month,mm\n1,40\n"
     got = client.get("/api/docs/doc/files/rain.csv")
     assert got.data == b"month,mm\n1,40\n"
@@ -94,7 +95,7 @@ def test_files_roundtrip(client, tmp_path):
     assert got.headers["X-Content-Type-Options"] == "nosniff"
     _upload(client, ("rain.csv", b"x"))
     assert (tmp_path / "doc" / "rain.csv").read_bytes() == b"x"
-    assert client.delete("/api/docs/doc/files/rain.csv").json == [{"name": "photo.png", "size": 4}]
+    assert [f["name"] for f in client.delete("/api/docs/doc/files/rain.csv").json] == ["photo.png"]
     assert client.get("/api/docs/doc/files/rain.csv").status_code == 404
 
 

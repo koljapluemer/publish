@@ -1,5 +1,5 @@
 """The editor: the docs under `thea/`, their viz blocks, and the frontend; in
-the background, PDFs of the repo's Markdown (watch.py)."""
+the background, PDFs and web pages of the repo's Markdown (watch.py)."""
 
 import argparse
 import logging
@@ -81,7 +81,7 @@ def write_doc(doc):
 
 
 def _file_list(doc: str) -> list[dict]:
-    return [{"name": p.name, "size": p.stat().st_size} for p in doc_files(doc)]
+    return [{"name": p.name, "size": (st := p.stat()).st_size, "mtime": int(st.st_mtime)} for p in doc_files(doc)]
 
 
 @app.get("/api/docs/<doc>/files")
@@ -133,7 +133,7 @@ def delete_file(doc, name):
 
 
 @app.get("/api/status")
-def status(): return jsonify(generate.status() | {"pdf": watch.results()})
+def status(): return jsonify(generate.status() | {"render": watch.results()})
 
 
 @app.get("/api/jobs")
@@ -190,8 +190,8 @@ def main() -> None:
     parser.add_argument("--budget-usd", type=float, default=2.0,
                         help="cap per run in the CLI's estimated USD at API prices; 0 for none")
     parser.add_argument("--timeout-min", type=int, default=20, help="time limit per run")
-    parser.add_argument("--no-watch", action="store_true", help="don't render PDFs in the background")
-    parser.add_argument("--force-pdf", action="store_true", help="on startup, re-render even up-to-date PDFs")
+    parser.add_argument("--no-watch", action="store_true", help="don't render PDFs and web pages in the background")
+    parser.add_argument("--force-pdf", action="store_true", help="on startup, re-render even up-to-date PDFs and pages")
     parser.add_argument("--debug", action="store_true")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO, format=watch.LOG_FORMAT, datefmt="%H:%M:%S")

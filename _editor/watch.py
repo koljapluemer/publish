@@ -1,8 +1,9 @@
 """Watching the repo in the background: every `.md` whose frontmatter `target`
-has `pdf` is rendered to a PDF next to it (pdf.py) when it changes, and on
-startup when it's out of date. The editor starts this (app.py); `python pdf.py`
-runs it alone."""
+has `pdf` is rendered to a PDF next to it (pdf.py), and one with `web` to an
+HTML page next to it (web.py), when it changes, and on startup when it's out of
+date. The editor starts this (app.py); `python watch.py` runs it alone."""
 
+import argparse
 import logging
 import threading
 import time
@@ -11,9 +12,13 @@ from pathlib import Path
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-from pdf import RenderError, render_if_targeted
+import pdf
+import web
+from pdf import RenderError
 
-log = logging.getLogger("pdf")
+log = logging.getLogger("render")
+# what a doc can be rendered to, by its frontmatter `target`
+RENDERERS = {"pdf": pdf.render_if_targeted, "web": web.render_if_targeted}
 
 REPO = Path(__file__).resolve().parent.parent
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
@@ -21,8 +26,8 @@ DEBOUNCE_SECONDS = 0.3
 # besides hidden folders; `viz/` holds the generated sources of thea vizzes
 IGNORED_DIRS = {"node_modules", "viz"}
 
-# the last render of each file, by path relative to the root: ok, error, time
-_results: dict[str, dict] = {}
+# the last render of each file, by path relative to the root, then by kind: ok, error, time
+_results: dict[str, dict[str, dict]] = {}
 _results_lock = threading.Lock()
 
 
@@ -61,35 +66,36 @@ class ChangeCollector(FileSystemEventHandler):
         return settled
 
 
-def _record(name: str, error: str | None) -> None:
+def _record(name: str, kind: str, error: str | None) -> None:
     with _results_lock:
-        _results[name] = {"ok": error is None, "error": error, "time": time.time()}
+        _results.setdefault(name, {})[kind] = {"ok": error is None, "error": error, "time": time.time()}
 
 
-def results() -> dict[str, dict]:
-    """The last render of each file since startup, by path relative to the root."""
+def results() -> dict[str, dict[str, dict]]:
+    """The last render of each file since startup, by path relative to the root, then by kind (pdf, web)."""
     with _results_lock:
-        return {k: dict(v) for k, v in sorted(_results.items())}
+        return {k: {kind: dict(r) for kind, r in v.items()} for k, v in sorted(_results.items())}
 
 
-def render(path: Path, root: Path, force: bool = False) -> None:
-    """Render one file. Failures are logged so that the watcher keeps running;
-    the previous PDF stays in place."""
-    name = path.relative_to(root).as_posix()
-    try:
-        output = render_if_targeted(path, root, force=force)
-    except FileNotFoundError:
-        return  # deleted between the event and the render
-    except RenderError as e:
-        log.error("%s: %s", name, e)
-        _record(name, str(e))
-    except Exception as e:
-        log.exception("%s: unexpected error", name)
-        _record(name, f"unexpected error: {e}")
-    else:
-        if output:
-            log.info("rendered %s", output.relative_to(root))
-            _record(name, None)
+def render(path: Path, root: Path = REPO, force: bool = False, kinds=tuple(RENDERERS)) -> None:
+    """Render one file to each of `kinds` it targets. Failures are logged so
+    that the watcher keeps running; the previous output stays in place."""
+    name = path.relative_to(root).as_posix() if path.is_relative_to(root) else path.as_posix()
+    for kind in kinds:
+        try:
+            output = RENDERERS[kind](path, root, force=force)
+        except FileNotFoundError:
+            return  # deleted between the event and the render
+        except RenderError as e:
+            log.error("%s (%s): %s", name, kind, e)
+            _record(name, kind, str(e))
+        except Exception as e:
+            log.exception("%s (%s): unexpected error", name, kind)
+            _record(name, kind, f"unexpected error: {e}")
+        else:
+            if output:
+                log.info("rendered %s", output.relative_to(root) if output.is_relative_to(root) else output)
+                _record(name, kind, None)
 
 
 def render_all(root: Path, force: bool = False) -> None:
@@ -120,6 +126,28 @@ def watch(root: Path, force: bool = False, stop: threading.Event | None = None) 
 
 def start(root: Path = REPO, force: bool = False) -> threading.Thread:
     """`watch` in a daemon thread."""
-    thread = threading.Thread(target=watch, args=(root, force), name="pdf", daemon=True)
+    thread = threading.Thread(target=watch, args=(root, force), name="render", daemon=True)
     thread.start()
     return thread
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Render every Markdown file with `target: pdf` or `web`, then watch.")
+    parser.add_argument("root", nargs="?", type=Path, default=REPO, help="folder to watch (default: the repo)")
+    parser.add_argument("--once", action="store_true", help="render what is out of date, then exit")
+    parser.add_argument("--force", action="store_true", help="on startup, re-render even up-to-date outputs")
+    args = parser.parse_args()
+    logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt="%H:%M:%S")
+
+    root = args.root.resolve()
+    if args.once:
+        render_all(root, force=args.force)
+        return
+    try:
+        watch(root, force=args.force)
+    except KeyboardInterrupt:
+        pass
+
+
+if __name__ == "__main__":
+    main()

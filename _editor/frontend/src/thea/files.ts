@@ -6,17 +6,23 @@ import { theaBlocks } from './thea';
 const FILE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 export const FILE_TYPES = ['csv', 'tsv', 'txt', 'md', 'json', 'geojson', 'svg', 'png', 'jpg', 'jpeg', 'webp',
   'gif', 'avif', 'woff', 'woff2', 'ttf', 'otf'];
-const IMAGE_TYPES = ['svg', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'avif'];
+export const IMAGE_TYPES = ['svg', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'avif'];
 const MIME_TYPES: Record<string, string> = {
   'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif',
   'image/svg+xml': 'svg', 'text/csv': 'csv', 'application/json': 'json', 'text/plain': 'txt',
 };
 
-const ext = (name: string) => (name.includes('.') ? name.slice(name.lastIndexOf('.') + 1).toLowerCase() : '');
+export const ext = (name: string) => (name.includes('.') ? name.slice(name.lastIndexOf('.') + 1).toLowerCase() : '');
 const filesUrl = (doc: string) => `/api/docs/${encodeURIComponent(doc)}/files`;
 
 /** Where the preview finds the doc's files: relative image paths resolve against it. */
 export const docFilesBase = (doc: string) => `${filesUrl(doc)}/`;
+
+/** One of the doc's files, as of `file.mtime`, so that a replaced image isn't shown from the cache. */
+export const docFileUrl = (doc: string, file: DocFile) =>
+  `${docFilesBase(doc)}${encodeURIComponent(file.name)}?v=${file.mtime}`;
+
+export const isImage = (name: string) => IMAGE_TYPES.includes(ext(name));
 
 export const docFilesQuery = (doc: string) => queryOptions({
   queryKey: ['files', doc], queryFn: () => api<DocFile[]>('GET', filesUrl(doc)),
@@ -55,7 +61,7 @@ export function fileName(file: { name: string; type: string }, now = new Date())
 export function fileReference(text: string, pos: number, name: string): string {
   const line = text.slice(0, pos).split('\n').length - 1;
   if (theaBlocks(text).some((b) => b.line < line && line < b.end)) return name;
-  return IMAGE_TYPES.includes(ext(name)) ? `![](${name})` : name;
+  return isImage(name) ? `![](${name})` : name;
 }
 
 export function formatSize(bytes: number) {

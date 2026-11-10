@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>_Cybersickness Mitigation Lab_: An Open-Source Software Suite For Rapid Replication and Innovation of In-Software Anti-Cybersickness Strategies</title>
+
+<style>
+:root { --bg: #fff; --fg: #18181b; --muted: #71717a; --border: #e4e4e7; --code: #f4f4f5; --link: #2563eb;
+  color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #18181b; --fg: #f4f4f5; --muted: #a1a1aa; --border: #3f3f46; --code: #27272a; --link: #60a5fa;
+    color-scheme: dark; }
+}
+html { background: var(--bg); color: var(--fg); }
+body { margin: 0 auto; max-width: 70ch; padding: 2rem 16px 4rem; font: 17px/1.6 system-ui, "Noto Sans", sans-serif; }
+h1, h2, h3, h4 { line-height: 1.25; margin: 2em 0 0.6em; }
+h1 { font-size: 2rem; margin-top: 0.5em; }
+header p { color: var(--muted); margin: 0.2em 0; }
+a { color: var(--link); }
+img, video { max-width: 100%; height: auto; }
+figure { margin: 1.5em 0; }
+figcaption { color: var(--muted); font-size: 0.9em; }
+pre, code { font: 0.9em ui-monospace, "DejaVu Sans Mono", monospace; background: var(--code); border-radius: 4px; }
+code { padding: 0.1em 0.3em; }
+pre { padding: 0.8em 1em; overflow-x: auto; }
+pre code { padding: 0; background: none; }
+blockquote { margin: 1em 0; padding-left: 1em; border-left: 3px solid var(--border); color: var(--muted); }
+table { border-collapse: collapse; display: block; overflow-x: auto; }
+th, td { border: 1px solid var(--border); padding: 0.3em 0.6em; }
+hr { border: 0; border-top: 1px solid var(--border); }
+math[display="block"] { overflow-x: auto; }
+iframe.thea { display: block; width: 100%; height: 300px; border: 0; margin: 1.5em 0; }
+</style>
+</head>
+<body>
+<h1 id="cybersickness-mitigation-lab-an-open-source-software-suite-for-rapid-replication-and-innovation-of-in-software-anti-cybersickness-strategies"><em>Cybersickness Mitigation Lab</em>: An Open-Source Software Suite For Rapid Replication and Innovation of In-Software Anti-Cybersickness Strategies</h1>
+<p>== Relevance</p>
+<p>Cybersickness (CS) is one of the largest problems in Virtual Reality (VR) adoption. This applies to both the end-user domain, where CS critically reduces User Experience and professional domains, where CS may prevent otherwise promising candidates from becoming drone pilots (<em>there is some paper on this, cite</em>).</p>
+<p>CS can be attacked via hardware solutions (eg. motion platforms, spinning chairs, Natural Walking, …). However, by nature, these require specific hardware products to be designed, manufactured, shipped and installed whereever usage is desired. Thus, from a pragmatic perspective, in-software solutions (ie. in the VR application itself) are especially promising, since the aforementioned steps are generally simpler, cheaper and faster when only software is involved.</p>
+<p>In this work, we discuss core issues of current in-software CS mitigation research and practice. Furthermore, we contribute an open-source software as a first building block to improve on the current situation.</p>
+<p>== Identified Problem</p>
+<p>While a range of in-software CS mitigation strategies have been proposed (including but not limited to rest frames, galvanic stimulation, FoV reduction, optical flow reduction, FPS optimization, scene design, spatial audio and adaptable virtual movement), a comprehensive framework of best practices is lacking.</p>
+<p>A long-running scientific discourse on a complex, multifactorial issue such as CS —— which spans physiology, neuroscience, human-computer-interaction, media theory and social effects — is perhaps to be expected. Nonetheless, the lack of clear guidance poses a pragmatic issue for the inquiring practitioner who desires to design a usable VR application right now.</p>
+<p>We believe that siloed research is a core factor in this problem: Currently, a given research team implements a mitigation, runs a single study or study series on it, publishes the results. The process then stops. Replication is seldom attempted. Experimental setups are manifold, as are CS measurements. One study may follow an iterative qualitative co-design approach, producing a case study as a result, another may be setup as an “A/B test”, producing as result an effect size and a p-value. A research team may use a joystick for in-situ felt CS reports, or do a before-and-after comparison of SSQ results. Another may use EEG measurements.</p>
+<p>Each published study is thus a combination of assumptions, paradigms, and measurements never seen again before or after. This is reflected in the few reviews and meta-analyses on CS, who note a lack of comparability and extract sweeping results only guardedly <em>(I think I can cite this lol)</em>.</p>
+<p>Another, related problem: // needs better transition/intro Especially for a practitioner, the possibility to actually experience a proposed CS mitigation is pertinent. Consider for example the hypothetical lead of a VR application product team who is currently faced with the problems of users experiencing cybersickness. It is unlikely that she would seriously consider implementing a CS mitigation on the pure merit of an effect size, a significance value and a couple of screenshots. To enable her to design a good product, she must see the strategy “in action”. While more and more research in research years adopted the commendable practice of providing a link to a code repository…they are usually bad lol. // somehow they: but the repos are garbage, outdated unity shit with dead dependencies but no doc Thus, the large gulf between academic research and practical application (identified in regards to CS and more generally) is perhaps not surprising.</p>
+<p>Additionally, circling back to the academic dimension, these code repositories appear yet again to stand alone, essentially unaware of each other: An informal review yielded little to no evidence of cross-fertiliziation between repositories.</p>
+<p>We want to highlight that the problems discussed above are not to be construed as criticism of individual researcher, teams or publications. In fact, we strongly believe that the specific ideas research teams bring to their CS research will eventually deliver to key to resolve most if not all issues surrounding CS — to harness this, we merely need to create a system that enables these works to genuinely build on each other instead of essentially restarting from scratch.</p>
+<p>== Proposal</p>
+<p>We propose the <code>cybersickness mitigation lab</code>, an open source software tool. Based on the discussion above, it should fulfill:</p>
+<ol type="1">
+<li>Enable interested parties to quickly experience, test and evaluate cybersickness mitigation strategies</li>
+<li>Allow concerned researchers to quickly replicate, test and falsify novel or prior cybersickness mitigation strategies.</li>
+</ol>
+<p>We implemented <code>cybersickness mitigation lab</code> as a static web application, which achieves high portability to a large number of devices (including every modern consumer VR headset and almost any modern Android or Apple phone). The technology is also fully open source with no dependencies to commercial closed-source technology such as <code>Unity 3D</code>.</p>
+<p>At the core of the app, we defined three main abstractions: <em>contexts</em>, <em>interventions</em>, and <em>measurements</em>.</p>
+<ul>
+<li>A <em>context</em> is the (minimal) VR application context, e.g. a user-controlled low-poly racing game, or a simulated drone flight using a high-resolution Gaussian Splatting scan of a street in Delft</li>
+<li>An <em>intervention</em> is the CS mitigation strategy applied, e.g. “none”, “800hz mono tone before a sharp tone” or “FoV vignette effect on acceleration”</li>
+<li>A <em>measurement</em> is a way of measuring CS, e.g. a pre- and post-session SSQ form</li>
+</ul>
+<p>By isolating these concepts in code (following a version of <em>hexagonal design</em>), we can arbitrarily combine objects of these three abstractions. Additionally, defining clean interfaces in this way allows us — and other interested parties, in the future — to rapidly and reliably add in new contexts, interventions using agentic coding. Thus:</p>
+<ol type="1">
+<li>Prior art on in-software CS mitigation interventions (eg. strategies proposed by existing papers) can be rapidly integrated. We already integrated <em>$n</em> of mitigation strategies from descriptions in literature. <em>add list of cool shit we integrated, so far it’s two papers only, but it’s really just tokens</em></li>
+<li>Gaps in the three-dimensional matrix spanned by our three abstractions can quickly be filled, answering questions with shapes like <em>“Does intervention X still works in context Y as measured by Y?”</em></li>
+<li>Novel contexts, interventions and measurements can be rapidly tested against a growing body of references, answering questions like <em>“How strongly does novel measurement tool X correlate with existing tool Y?”</em> and <em>“Does novel VR interaction Z triggers CS in ways that existing mitigation strategies cannot solve?”</em></li>
+</ol>
+<p>Importantly, we aim to make our tool usable and useful not only to research teams with timeframes measured in month, but also to casually interested developers or even VR users. We aim to achieve this by keeping our tool lean, open-source, freely available without barriers (ie. deployed on the public web), well-documented and easy to run and extend.</p>
+<p>== Evaluation</p>
+<p>We ran a prototypical pre-study to test the usability of <code>cybersickness mitigation lab</code> as a serious research tool, testing two arbitrarily chosen CS mitigation strategies from existing research against a base condition.</p>
+<p>== Limitations</p>
+<p>Some stuff you can’t represent in our abstractions. 3js+aframe are sometimes worse than unity, e.g. probably HRTF and shit. Native apps have some performance and UX advantages over web, but honestly not many.</p>
+<p>== Misc</p>
+<p>repo here lol: https://github.com/koljapluemer/thesis-cybersickness-mitigation-tests</p>
+<p>== Literature</p>
+<p>I swear I have citations for most of the stuff I’m saying but I’m on the train rn</p>
+<script>
+// viz iframes report their height and follow the page's theme (the bridge in _editor/template/build.mjs)
+(() => {
+  const frames = () => [...document.querySelectorAll('iframe.thea')];
+  const dark = matchMedia('(prefers-color-scheme: dark)');
+  const theme = (f) => f.contentWindow && f.contentWindow.postMessage({ type: 'theme', mode: dark.matches ? 'dark' : 'light' }, '*');
+  addEventListener('message', (e) => {
+    const d = e.data;
+    if (!d || d.source !== 'thea' || d.type !== 'resize') return;
+    const f = frames().find((f) => f.contentWindow === e.source);
+    if (f && d.height > 0) f.style.height = d.height + 'px';
+  });
+  for (const f of frames()) f.addEventListener('load', () => theme(f));
+  dark.addEventListener('change', () => frames().forEach(theme));
+})();
+</script>
+</body>
+</html>

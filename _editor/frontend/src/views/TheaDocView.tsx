@@ -1,16 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { EditorView } from '@codemirror/view';
-import { FilePlus, Paperclip, Trash2, Upload, WandSparkles } from 'lucide-react';
+import { FilePlus, Paperclip, WandSparkles } from 'lucide-react';
 import { api } from '@/api';
 import { CodeMirrorHost } from '@/dumb/CodeMirrorHost';
 import { Markdown, type FenceRenderer } from '@/dumb/Markdown';
 import { showError } from '@/dumb/notice';
 import { insertViz, theaBlocks, withNewName, type TheaBlock as Block } from '@/thea/thea';
 import { TheaBlock } from '@/thea/TheaBlock';
-import { deleteFile, docFilesBase, docFilesQuery, fileName, fileReference, formatSize, uploadFiles } from '@/thea/files';
+import { deleteFile, docFilesBase, docFilesQuery, fileName, fileReference, uploadFiles } from '@/thea/files';
+import { FilesPanel } from '@/thea/FilesPanel';
 
 type Props = { path: string; navigate: (path: string) => void };
+
+const FILES_OPEN_KEY = 'thea.filesOpen';
+const readFilesOpen = () => { try { return localStorage.getItem(FILES_OPEN_KEY) !== '0'; } catch { return true; } };
 
 const docsQuery = { queryKey: ['docs'], queryFn: () => api<string[]>('GET', '/api/docs') };
 const docQuery = (doc: string) => ({
@@ -74,6 +78,13 @@ function LoadedEditor({ doc, saved, onSaved, onDirty }: { doc: string; saved: st
   const files = useQuery(docFilesQuery(doc)).data;
   const [draft, setDraft] = useState(saved);
   const [tab, setTab] = useState<'edit' | 'preview'>('edit');
+  const [filesOpen, setFilesOpen] = useState(readFilesOpen);
+  function toggleFiles() {
+    setFilesOpen((open) => {
+      try { localStorage.setItem(FILES_OPEN_KEY, open ? '0' : '1'); } catch { /* not stored */ }
+      return !open;
+    });
+  }
   const editor = useRef<EditorView | null>(null);
   const dirty = draft !== saved;
   const blocks = useMemo(() => theaBlocks(draft), [draft]);
@@ -160,35 +171,16 @@ function LoadedEditor({ doc, saved, onSaved, onDirty }: { doc: string; saved: st
           <button type="button" role="tab" className={`tab ${tab === 'preview' ? 'tab-active' : ''}`} onClick={() => setTab('preview')}>Preview</button>
         </div>
         <button type="button" className="btn btn-xs btn-ghost" title="Insert a viz block" onClick={() => withEditor(insertViz)}><WandSparkles size={14} />Viz</button>
-        <details className="dropdown">
-          <summary className="btn btn-xs btn-ghost" title="The doc's files, next to its index.md: drop or paste them into the editor">
-            <Paperclip size={14} />Files{files?.length ? ` (${files.length})` : ''}
-          </summary>
-          <ul className="dropdown-content menu menu-xs z-10 w-72 rounded-box border border-base-300 bg-base-100 p-1 shadow">
-            {files?.map((f) => (
-              <li key={f.name} className="flex-row flex-nowrap items-center">
-                <button type="button" className="min-w-0 flex-1" title="Insert a reference at the cursor"
-                        onClick={() => withEditor((view) => insertReferences(view, [f.name]))}>
-                  <span className="truncate">{f.name}</span><span className="ml-auto shrink-0 opacity-50">{formatSize(f.size)}</span>
-                </button>
-                <button type="button" className="shrink-0 px-1.5" title={`Delete ${f.name}`} aria-label={`Delete ${f.name}`}
-                        onClick={() => void remove(f.name)}><Trash2 size={12} /></button>
-              </li>
-            ))}
-            {files?.length === 0 && <li className="menu-disabled"><span>No files yet</span></li>}
-            <li>
-              <label className="cursor-pointer"><Upload size={12} />Add files…
-                <input type="file" multiple className="hidden" onChange={(e) => {
-                  const picked = [...(e.target.files ?? [])];
-                  e.target.value = '';
-                  void addFiles(picked);
-                }} />
-              </label>
-            </li>
-          </ul>
-        </details>
+        <button type="button" className={`btn btn-xs btn-ghost ${filesOpen ? 'btn-active' : ''}`} aria-pressed={filesOpen}
+                title="The doc's files, next to its index.md" onClick={toggleFiles}>
+          <Paperclip size={14} />Files{files?.length ? ` (${files.length})` : ''}
+        </button>
         {dirty && <span className="status status-warning ml-auto" title="unsaved: saved when the editor loses focus" aria-label="unsaved changes" />}
       </div>
+      {filesOpen && (
+        <FilesPanel doc={doc} files={files} onAdd={(picked) => void addFiles(picked)} onDelete={(name) => void remove(name)}
+                    onInsert={(name) => withEditor((view) => insertReferences(view, [name]))} />
+      )}
       <main className="grid flex-1 gap-4 p-3 md:grid-cols-2">
         <div className={pane('edit')}>
           <CodeMirrorHost value={draft} onChange={setDraft} onSave={() => void save()} onBlur={() => void save()}

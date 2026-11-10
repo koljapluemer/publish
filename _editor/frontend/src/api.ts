@@ -33,4 +33,4 @@ export type TheaJob = {
 export type TheaMeta = { spec: string; model: string | null; created: string; cost_usd: number | null; turns: number | null };
 export type TheaStatus = { available: boolean; reason: string | null };
 /** one of a doc's files, next to its index.md */
-export type DocFile = { name: string; size: number };
+export type DocFile = { name: string; size: number; mtime: number };

@@ -1,3 +1,7 @@
+---
+target: web
+---
+
 # Example
 
 A doc with a viz block. The fence holds the spec; the editor's preview shows the built viz.

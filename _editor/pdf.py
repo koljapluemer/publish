@@ -1,12 +1,10 @@
 """Render a Markdown file with `target: pdf` frontmatter to a PDF next to it.
 
 Pipeline: frontmatter -> pandoc (Markdown to Typst markup) -> Typst (PDF).
-The editor runs this in the background (watch.py); `python pdf.py` runs it alone.
+The editor runs this in the background (watch.py); `python watch.py` runs it alone.
 """
 
-import argparse
 import json
-import logging
 import os
 import re
 from functools import cache
@@ -30,16 +28,19 @@ def _fonts() -> typst.Fonts:
     return typst.Fonts()
 
 
-
 class RenderError(Exception):
     """A document could not be rendered; the message is meant for the log."""
 
 
-def wants_pdf(target) -> bool:
-    """Accept `target: pdf`, `target: web, pdf` and YAML lists."""
+def wants(target, kind: str) -> bool:
+    """Whether frontmatter `target` names `kind`: `target: pdf`, `target: web, pdf` and YAML lists."""
     values = target if isinstance(target, list) else [target]
     tokens = (t for v in values for t in re.split(r"[,\s]+", str(v)))
-    return any(t.lower() == "pdf" for t in tokens)
+    return any(t.lower() == kind for t in tokens)
+
+
+def wants_pdf(target) -> bool:
+    return wants(target, "pdf")
 
 
 def available_templates() -> list[str]:
@@ -189,28 +190,3 @@ def _pandoc(text: str, input_format: str, filters=None, extra_args=()) -> str:
         filters=filters,
         extra_args=["--wrap=none", *extra_args],
     )
-
-
-def main() -> None:
-    import watch  # watch imports this module
-
-    parser = argparse.ArgumentParser(description="Render every Markdown file with `target: pdf` to PDF, then watch.")
-    parser.add_argument("root", nargs="?", type=Path, default=watch.REPO,
-                        help="folder to watch (default: the repo)")
-    parser.add_argument("--once", action="store_true", help="render what is out of date, then exit")
-    parser.add_argument("--force", action="store_true", help="on startup, re-render even up-to-date PDFs")
-    args = parser.parse_args()
-    logging.basicConfig(level=logging.INFO, format=watch.LOG_FORMAT, datefmt="%H:%M:%S")
-
-    root = args.root.resolve()
-    if args.once:
-        watch.render_all(root, force=args.force)
-        return
-    try:
-        watch.watch(root, force=args.force)
-    except KeyboardInterrupt:
-        pass
-
-
-if __name__ == "__main__":
-    main()

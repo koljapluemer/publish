@@ -79,7 +79,7 @@ def test_unknown_template(tmp_path):
 def test_failure_is_recorded_and_keeps_going(tmp_path):
     _doc(tmp_path, "target: pdf\ntemplate: nope")
     watch.render_all(tmp_path)
-    assert watch.results()["notes/index.md"]["ok"] is False
+    assert watch.results()["notes/index.md"]["pdf"]["ok"] is False
 
 
 def test_watch_catches_up_then_renders_changes(tmp_path):

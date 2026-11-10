@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { resolveImage } from '@/dumb/resolve';
-import { fileName, fileReference } from './files';
+import { docFileUrl, fileName, fileReference, isImage } from './files';
 
 describe('fileReference', () => {
   const text = 'Prose\n\n```thea a-b\nA chart of \n```\nmore';
@@ -39,5 +39,13 @@ describe('resolveImage', () => {
     expect(resolveImage('x.png', base)).toBe('/api/docs/d/files/x.png');
     for (const href of ['/abs.png', 'https://e.org/c.png', 'data:image/png;base64,AA==', '#x']) expect(resolveImage(href, base)).toBe(href);
     expect(resolveImage('x.png', '')).toBe('x.png');
+  });
+});
+
+describe('docFileUrl', () => {
+  it('versions the URL by mtime and encodes the name', () => {
+    expect(docFileUrl('psnr', { name: 'a b.png', size: 1, mtime: 42 })).toBe('/api/docs/psnr/files/a%20b.png?v=42');
+    expect(isImage('x.JPG')).toBe(true);
+    expect(isImage('x.csv')).toBe(false);
   });
 });

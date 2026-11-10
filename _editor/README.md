@@ -3,8 +3,9 @@
 Two things in one process:
 
 - In the background, every `.md` in the repo whose frontmatter `target` has
-  `pdf` is rendered to a PDF next to it, on startup if it's out of date and
-  whenever it changes (see [PDF](#pdf)).
+  `pdf` is rendered to a PDF next to it, and one with `web` to an HTML page
+  next to it, on startup if it's out of date and whenever it changes (see
+  [PDF](#pdf) and [Web](#web)).
 - A local editor for the Markdown docs under `thea/`, with viz blocks: a fenced
   block whose info string is `thea` holds the spec of an interactive
   visualization. The local [claude CLI](https://claude.com/claude-code)
@@ -15,13 +16,14 @@ Two things in one process:
 just chromium        # once: the headless Chromium for checks and thumbnails
 just editor          # http://127.0.0.1:8767, and PDFs in the background
 just editor --model sonnet --budget-usd 1 --timeout-min 15
-just editor --no-watch   # no PDFs
-just editor --force-pdf  # re-render every PDF first (e.g. after editing a template)
+just editor --no-watch   # no PDFs or pages
+just editor --force-pdf  # re-render every PDF and page first (e.g. after editing a template)
 just editor-dev      # frontend with hot reload on :5173
 just editor-check    # lint, typecheck, build, test
-just pdf             # only the PDFs: catch up, then watch
-just pdf --once      # catch up, then exit (--force: re-render everything)
-just pdf ~/notes     # watch a different folder
+just render          # only the PDFs and pages: catch up, then watch (alias: just pdf)
+just render --once   # catch up, then exit (--force: re-render everything)
+just render ~/notes  # watch a different folder
+just site psnr       # render, then serve thea/psnr/ as its static site on :8000
 ```
 
 The CLI command is `claude`, or `$THEA_CLI`. The server listens on localhost
@@ -31,6 +33,7 @@ only: generating runs code as you.
 
 ```
 thea/<doc>/index.md            the doc
+thea/<doc>/index.html          its web page, with `target: web` (generated, see Web)
 thea/<doc>/rain.csv …          its files (data, images, fonts), flat next to it
 thea/<doc>/viz/<name>/         one viz, generated, committed
   src/ package.json …          its sources
@@ -60,15 +63,21 @@ block was removed or renamed stays on disk until you delete it.
 ## Files
 
 A doc's files sit next to its `index.md`: CSV, TSV, JSON, GeoJSON, text,
-Markdown, images and fonts, at most 2 MB each, named with letters, digits,
-`.`, `_` and `-`. Drop or paste them into the editor, or use the Files menu. A
-reference goes in where they land: the bare name inside a viz spec, `![](name)`
-for an image in the prose. The preview shows those images.
+Markdown, images and fonts, at most 10 MB each, named with letters, digits,
+`.`, `_` and `-`. A file copied into the folder by hand is one of them too.
+
+The Files panel above the editor shows them as tiles, images as thumbnails.
+Clicking one inserts a reference at the cursor: the bare name inside a viz
+spec, `![](name)` for an image in the prose. Dropping files on the panel or
+"Add" copies them into the folder; dropping or pasting them into the editor
+also inserts references where they land. The preview, the web page and the PDF
+all show `![](name)` images.
 
 A spec names a file by its bare name ("monthly rainfall from rain.csv").
 Generating copies the doc's files into the workspace's `files/`, read-only,
 with `FILES.md` describing each (size, first lines or JSON shape). The viz
-imports what it uses (`../files/rain.csv`) and the build inlines it. The files
+imports what it uses (`../files/rain.csv`) and the build inlines it, so a
+built page holds at most 5 MB of them (`FILES.md` flags larger files). The files
 are never copied into `viz/<name>/`. After changing a file, regenerate the
 vizzes that use it.
 
@@ -119,13 +128,38 @@ skipped). `pdf.py` renders a doc with pandoc (Markdown to Typst markup) and
 Typst (PDF); both install through uv. The editor runs this on a thread of its
 own, so it never waits on viz generation, and `just pdf` runs it alone. If a
 render fails, the error is logged and the previous PDF stays in place.
-`GET /api/status` lists each render since startup under `pdf`.
+`GET /api/status` lists each render since startup under `render`, by file and
+kind (`pdf`, `web`).
+
+## Web
+
+A doc with `web` in its frontmatter `target` is rendered by `web.py` to
+`index.html` next to its `index.md`, so the doc's folder is its static site:
+
+```
+thea/psnr/
+  index.html                   the page
+  original.jpg …               its files, linked relatively
+  viz/serene-yak/index.html    each viz, in an iframe
+```
+
+Each `thea` block becomes `<iframe sandbox="allow-scripts"
+src="viz/<name>/index.html">`, sized by the height the viz reports and given
+the page's light or dark theme. A block whose viz isn't built is left out (it
+is re-rendered after the viz's first build). The rest is pandoc's Markdown to
+HTML (`web-template/page.html`, MathML for `$math$`), with no request
+outside the folder. Images keep their relative paths. Frontmatter `title`,
+`subtitle`, `author`, `date`, `lang` and `description` are used.
+
+Deploy by copying the folder to any static host (the vizzes' sources come
+along, harmlessly); `just site <doc>` serves it locally. A static host sends no
+CSP header, so the iframe's sandbox is what isolates a viz there.
 
 ### Frontmatter
 
 ```yaml
 ---
-target: web, pdf          # or just `pdf`, or a YAML list
+target: web, pdf          # `web`: an HTML page, `pdf`: a PDF; or a YAML list
 template: scientific      # file name in pdf-templates/; default: `default`
 title: My *Paper*         # default: a leading `# H1` in the body
 ---

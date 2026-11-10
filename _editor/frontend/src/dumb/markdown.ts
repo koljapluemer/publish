@@ -1,6 +1,7 @@
 import { Marked } from 'marked';
 import DOMPurify from 'dompurify';
 import { resolveImage } from './resolve';
+import { withoutFrontmatter } from './frontmatter';
 
 // External links open in a new tab.
 DOMPurify.addHook('afterSanitizeAttributes', (node) => {
@@ -37,7 +38,7 @@ export function slotted(s: string, kinds: readonly string[], base = '') {
   slotKinds = kinds;
   imageBase = base;
   try {
-    return DOMPurify.sanitize(slotting.parse(s, { async: false }));
+    return DOMPurify.sanitize(slotting.parse(withoutFrontmatter(s), { async: false }));
   } finally {
     slotKinds = [];
     imageBase = '';
