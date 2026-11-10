@@ -1,5 +1,7 @@
 import { Marked } from 'marked';
 import DOMPurify from 'dompurify';
+import hljs from 'highlight.js/lib/common';
+import markedKatex from 'marked-katex-extension';
 import { resolveImage } from './resolve';
 import { withoutFrontmatter } from './frontmatter';
 import { imageWidth, withDetails } from './mdext';
@@ -25,8 +27,16 @@ const slotting = new Marked({
     code({ text, lang }) {
       const info = lang ?? '';
       const kind = info.split(/\s+/)[0];
-      if (!slotKinds.includes(kind)) return false;
-      return `<div data-fence="${escapeHtml(kind)}" data-info="${escapeHtml(info)}" data-code="${escapeHtml(text)}"></div>\n`;
+      if (slotKinds.includes(kind)) {
+        return `<div data-fence="${escapeHtml(kind)}" data-info="${escapeHtml(info)}" data-code="${escapeHtml(text)}"></div>\n`;
+      }
+      const code = kind && hljs.getLanguage(kind)
+        ? hljs.highlight(text, { language: kind }).value
+        : escapeHtml(text);
+      const language = kind
+        ? ` class="${hljs.getLanguage(kind) ? 'hljs ' : ''}language-${escapeHtml(kind)}"`
+        : '';
+      return `<pre><code${language}>${code}\n</code></pre>`;
     },
     image(token) {
       const width = (token as { maxWidth?: number }).maxWidth;
@@ -42,6 +52,9 @@ const slotting = new Marked({
     if (sized) [token.text, (token as { maxWidth?: number }).maxWidth] = sized;
   },
 });
+
+// KaTeX renders locally; its CSS and fonts are bundled by Vite.
+slotting.use(markedKatex({ throwOnError: false }));
 
 /** `s` as sanitized HTML, each fence of one of `kinds` a `[data-fence]` slot, relative image paths resolved against `base`. */
 export function slotted(s: string, kinds: readonly string[], base = '') {

@@ -28,7 +28,7 @@ Allow user to set kernel speed and to start/stop/reset the animation.
 
 ???
 
-```py
+```
 error_sum = 0
 nr_of_pixels = 0
 
@@ -41,6 +41,8 @@ for row in rows:
 mean_square_error = error_sum / nr_of_pixels
 ```
 
+Diesen extrem simplen Code können wir auch als sehr nervige Formel ausdrücken:
+
 ```thea orange-canyon
 Visualize the long-form MSE for Peak Signal-to-Noise Ratio.
 Show only that formula, not the PSNR base formula. Render the formula with proper TeX. 
@@ -48,6 +50,23 @@ Make the parts hoverable so we can see what each part of the formula means.
 Do not add labels, titles or anything else apart from that.
 ```
 
+...diesen MSE nehmen wir dann, und *teilen den maximal möglichen Pixelwert zum Quadrat durch diesen MSE*:
+
+$$\frac{\mathrm{MAX}_I^2}{\mathrm{MSE}}$$
+
+...und das konvertieren wir zu *Dezibel*, um die tendenziell extrem niedrigen oder extrem hohen Werte auf eine lesbare Skala zu konvertieren:
+
+$$\mathrm{PSNR} = 10\log_{10}\!\left(\frac{\mathrm{MAX}_I^2}{\mathrm{MSE}}\right)$$
+
+
+| Ratio $(\mathrm{MAX}_I^2 / \mathrm{MSE})$ | PSNR (dB) |
+|---:|---:|
+| 1 | 0 |
+| 10 | 10 |
+| 100 | 20 |
+| 1,000 | 30 |
+| 10,000 | 40 |
+| 100,000 | 50 |
 
 
 !!!
@@ -57,5 +76,15 @@ Do not add labels, titles or anything else apart from that.
 
 
 # Peak Signal-to-Noise Ratio (PSNR)
+
+Laut: `ffmpeg -i ORIGINAL.jpg -i KOMPRIMIERT.jpg -lavfi psnr -f null -`...
+
+...hat das JPG-komprimierte Bild im Vergleich zum Original **PSNR von 25.45**
+![deepfried|250](./fried.jpg) 
+
+...hat das GIF-komprimierte Bild im Vergleich zum Original **PSNR von 23.45**
+![gif|250](./to_gif.jpg) 
+
+## → JPG Kompression gewinnt gegen 4-Color GIF im Sinne vom PSNR
 
 !!!

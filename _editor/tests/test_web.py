@@ -46,6 +46,15 @@ A new block.
 ```
 
 $x^2$
+
+$$
+\\sum_{i=1}^n i
+$$
+
+```py
+def square(x):
+    return x * x
+```
 """
 
 
@@ -61,7 +70,9 @@ def test_renders_page_with_vizzes_and_relative_images(tmp_path):
     assert page.count('<iframe class="thea"') == 1
     assert 'src="viz/brisk-river/index.html" sandbox="allow-scripts"' in page
     assert "Not built yet" not in page and "A new block" not in page
-    assert "<math" in page
+    assert "<math" in page and '<math display="block"' in page
+    assert '<code class="sourceCode python">' in page
+    assert '<span class="kw">def</span>' in page
 
 
 def test_frontmatter_title_is_shown(tmp_path):

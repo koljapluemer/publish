@@ -84,6 +84,11 @@ Anything, viz blocks included; collapsed by default.
 `mdext.py` rewrites them to plain pandoc Markdown for the web page and the PDF;
 `frontend/src/dumb/mdext.ts` mirrors it for the preview.
 
+Fenced code uses the language in its info string for syntax highlighting; for
+example, a `py` fence uses Python highlighting. Inline TeX (`$x^2$`) and display
+TeX (a `$$` delimiter on its own line before and after the formula) render as
+math in the preview and published output.
+
 ## Files
 
 A doc's files sit next to its `index.md`: CSV, TSV, JSON, GeoJSON, text,

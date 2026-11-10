@@ -152,6 +152,7 @@ def render(text: str, folder: Path, meta: dict) -> str:
             "html5",
             format="markdown-citations",
             extra_args=["--standalone", f"--template={TEMPLATE}", "--mathml", "--wrap=none",
+                        "--highlight-style=pygments",
                         "--metadata", f"pagetitle={pagetitle}"],
         )
     except RuntimeError as e:

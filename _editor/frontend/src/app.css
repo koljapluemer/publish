@@ -1,6 +1,12 @@
 @import "tailwindcss";
+@import "katex/dist/katex.min.css";
+@import "highlight.js/styles/github.css";
 @plugin "daisyui";
 @plugin "@tailwindcss/typography";
+
+/* KaTeX display equations can be wider than the preview pane. */
+.prose .katex-display { overflow-x: auto; overflow-y: hidden; padding-block: 0.2em; }
+.prose pre code.hljs { padding: 0; background: transparent; }
 
 /* `???` … `!!!` sections in the preview (see dumb/mdext.ts) */
 .prose details { margin: 1em 0; padding: 0.4em 0.8em; border: 1px solid var(--color-base-300); border-radius: 6px; }
