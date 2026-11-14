@@ -28,6 +28,15 @@ def test_image_width():
     assert 'style="max-width: min(500px, 100%)"' in _html("![orig|500](a.jpg)")
 
 
+def test_video_and_audio_use_image_syntax_on_web_only():
+    web = mdext.extend('![Demo|500](demo.mp4 "Title") ![Voice](voice.mp3) ![Photo](photo.jpg)', "web")
+    assert '<video src="demo.mp4" controls aria-label="Demo" title="Title"' in web
+    assert 'style="max-width: min(500px, 100%)"' in web
+    assert '<audio src="voice.mp3" controls aria-label="Voice"></audio>' in web
+    assert '![Photo](photo.jpg)' in web
+    assert mdext.extend('![Demo](demo.mp4)', "pdf") == '![Demo](demo.mp4)'
+
+
 def test_pdf_keeps_content():
     out = pypandoc.convert_text(mdext.extend("??? Label\ninner\n!!!", "pdf"), "typst", format="markdown")
     assert "#strong[Label]" in out and "inner" in out and "details" not in out

@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import mimetypes
 import os
 from pathlib import Path
 
@@ -140,7 +141,8 @@ def typst_preview(doc):
 
 
 def _file_list(doc: str) -> list[dict]:
-    return [{"name": p.name, "size": (st := p.stat()).st_size, "mtime": int(st.st_mtime)} for p in doc_files(doc)]
+    return [{"name": p.name, "size": (st := p.stat()).st_size, "mtime": int(st.st_mtime),
+             "mime": mimetypes.guess_type(p.name)[0] or "application/octet-stream"} for p in doc_files(doc)]
 
 
 @app.get("/api/docs/<doc>/files")

@@ -159,7 +159,7 @@ function LoadedEditor({ doc, saved, onSaved, onDirty }: { doc: string; saved: st
                           onFiles={(picked, pos) => void addFiles(picked, pos)} editorRef={editor} />
         </div>
         <div className={pane('preview')}>
-          <Markdown source={draft} fences={fences} base={docFilesBase(doc)} className="prose max-w-none" />
+          <Markdown source={draft} fences={fences} base={docFilesBase(doc)} files={files} className="prose max-w-none" />
         </div>
       </main>
     </>

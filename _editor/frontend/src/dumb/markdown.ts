@@ -19,6 +19,7 @@ export const escapeHtml = (s: string) =>
 
 let slotKinds: readonly string[] = [];
 let imageBase = '';
+let mediaTypes: Readonly<Record<string, string>> = {};
 
 
 /** Fences whose info string starts with one of `slotKinds` become empty slots for the caller to fill. */
@@ -40,13 +41,22 @@ const slotting = new Marked({
     },
     image(token) {
       const width = (token as { maxWidth?: number }).maxWidth;
-      if (width === undefined) return false;
       const title = token.title ? ` title="${escapeHtml(token.title)}"` : '';
-      return `<img src="${escapeHtml(token.href)}" alt="${escapeHtml(token.text)}"${title} style="max-width: min(${width}px, 100%)">`;
+      const style = width === undefined ? '' : ` style="max-width: min(${width}px, 100%)"`;
+      const kind = (token as { mediaKind?: string }).mediaKind;
+      if (kind === 'video' || kind === 'audio') {
+        return `<${kind} src="${escapeHtml(token.href)}" controls aria-label="${escapeHtml(token.text)}"${title}${style}></${kind}>`;
+      }
+      if (width === undefined) return false;
+      return `<img src="${escapeHtml(token.href)}" alt="${escapeHtml(token.text)}"${title}${style}>`;
     },
   },
   walkTokens(token) {
     if (token.type !== 'image') return;
+    const localName = token.href.split(/[?#]/, 1)[0].replace(/^\.\//, '');
+    const mime = mediaTypes[decodeURIComponent(localName)];
+    if (mime?.startsWith('video/')) (token as { mediaKind?: string }).mediaKind = 'video';
+    if (mime?.startsWith('audio/')) (token as { mediaKind?: string }).mediaKind = 'audio';
     token.href = resolveImage(token.href, imageBase);
     const sized = imageWidth(token.text);
     if (sized) [token.text, (token as { maxWidth?: number }).maxWidth] = sized;
@@ -57,13 +67,15 @@ const slotting = new Marked({
 slotting.use(markedKatex({ throwOnError: false }));
 
 /** `s` as sanitized HTML, each fence of one of `kinds` a `[data-fence]` slot, relative image paths resolved against `base`. */
-export function slotted(s: string, kinds: readonly string[], base = '') {
+export function slotted(s: string, kinds: readonly string[], base = '', media: Readonly<Record<string, string>> = {}) {
   slotKinds = kinds;
   imageBase = base;
+  mediaTypes = media;
   try {
     return DOMPurify.sanitize(slotting.parse(withDetails(withoutFrontmatter(s)), { async: false }));
   } finally {
     slotKinds = [];
     imageBase = '';
+    mediaTypes = {};
   }
 }

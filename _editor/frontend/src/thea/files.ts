@@ -5,11 +5,14 @@ import { theaBlocks } from './thea';
 /** A doc's files: flat next to its index.md, for its prose and viz blocks; mirrors _editor/thea.py. */
 const FILE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 export const FILE_TYPES = ['csv', 'tsv', 'txt', 'md', 'json', 'geojson', 'svg', 'png', 'jpg', 'jpeg', 'webp',
-  'gif', 'avif', 'woff', 'woff2', 'ttf', 'otf'];
+  'gif', 'avif', 'mp4', 'webm', 'ogv', 'ogg', 'm4v', 'mov', 'mp3', 'wav', 'oga', 'm4a',
+  'woff', 'woff2', 'ttf', 'otf'];
 export const IMAGE_TYPES = ['svg', 'png', 'jpg', 'jpeg', 'webp', 'gif', 'avif'];
 const MIME_TYPES: Record<string, string> = {
   'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif',
   'image/svg+xml': 'svg', 'text/csv': 'csv', 'application/json': 'json', 'text/plain': 'txt',
+  'video/mp4': 'mp4', 'video/webm': 'webm', 'video/ogg': 'ogv', 'video/quicktime': 'mov',
+  'audio/mpeg': 'mp3', 'audio/wav': 'wav', 'audio/ogg': 'oga', 'audio/mp4': 'm4a',
 };
 
 export const ext = (name: string) => (name.includes('.') ? name.slice(name.lastIndexOf('.') + 1).toLowerCase() : '');

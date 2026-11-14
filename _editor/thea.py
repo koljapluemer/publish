@@ -21,7 +21,8 @@ DOC = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 INDEX = "index.md"
 FILE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 FILE_TYPES = frozenset({"csv", "tsv", "txt", "md", "json", "geojson", "svg", "png", "jpg", "jpeg", "webp",
-                        "gif", "avif", "woff", "woff2", "ttf", "otf"})
+                        "gif", "avif", "mp4", "webm", "ogv", "ogg", "m4v", "mov", "mp3", "wav", "oga", "m4a",
+                        "woff", "woff2", "ttf", "otf"})
 MAX_FILE_BYTES = 10 * 1024 * 1024
 # what a viz's built page may weigh (template/build.mjs), its inlined files included
 MAX_BUILT_BYTES = 5 * 1024 * 1024

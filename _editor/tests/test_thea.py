@@ -120,6 +120,7 @@ def test_files_roundtrip(client, tmp_path):
     assert r.status_code == 201
     assert [(f["name"], f["size"]) for f in r.json] == [("photo.png", 4), ("rain.csv", 14)]
     assert all(isinstance(f["mtime"], int) for f in r.json)
+    assert {f["name"]: f["mime"] for f in r.json} == {"photo.png": "image/png", "rain.csv": "text/csv"}
     assert (tmp_path / "doc" / "rain.csv").read_bytes() == b"month,mm\n1,40\n"
     got = client.get("/api/docs/doc/files/rain.csv")
     assert got.data == b"month,mm\n1,40\n"

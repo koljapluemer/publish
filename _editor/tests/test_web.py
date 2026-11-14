@@ -125,6 +125,18 @@ def test_copies_only_the_files_the_page_links(tmp_path):
                          "doc/viz/brisk-river/index.html", "shared/logo.svg"]
 
 
+def test_renders_and_copies_video_and_audio_from_image_syntax(tmp_path):
+    source = _doc(tmp_path, "target: web", '![Demo](demo.mp4)\n\n![Voice](voice.mp3)\n')
+    (source.parent / "demo.mp4").write_bytes(b"video")
+    (source.parent / "voice.mp3").write_bytes(b"audio")
+    output = web.render_if_targeted(source, tmp_path)
+    page = output.read_text(encoding="utf-8")
+    assert '<video src="demo.mp4" controls aria-label="Demo">\n</video>' in page
+    assert '<audio src="voice.mp3" controls aria-label="Voice">\n</audio>' in page
+    assert (tmp_path / "_site/doc/demo.mp4").read_bytes() == b"video"
+    assert (tmp_path / "_site/doc/voice.mp3").read_bytes() == b"audio"
+
+
 def test_changed_file_makes_page_stale(tmp_path):
     source = _doc(tmp_path, "target: web", "![](photo.jpg)\n")
     photo = source.parent / "photo.jpg"

@@ -44,7 +44,7 @@ describe('resolveImage', () => {
 
 describe('docFileUrl', () => {
   it('versions the URL by mtime and encodes the name', () => {
-    expect(docFileUrl('psnr', { name: 'a b.png', size: 1, mtime: 42 })).toBe('/api/docs/psnr/files/a%20b.png?v=42');
+    expect(docFileUrl('psnr', { name: 'a b.png', size: 1, mtime: 42, mime: 'image/png' })).toBe('/api/docs/psnr/files/a%20b.png?v=42');
     expect(isImage('x.JPG')).toBe(true);
     expect(isImage('x.csv')).toBe(false);
   });

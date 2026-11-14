@@ -6,18 +6,50 @@ editor's preview.
   closes it: `<details>` on the web, plain content in a PDF (the label, if any,
   as a bold line). Sections nest; one left open closes at the end.
 - `![alt|500](src)` shows the image at most 500 px wide.
+- On the web, image syntax targeting video or audio is rendered as the
+  corresponding HTML5 media element. The standard MIME registry classifies it.
 
 Lines inside fenced code are left alone.
 """
 
 import html
+import mimetypes
 import re
+from urllib.parse import urlsplit
 
 from thea import fence_end
 
 OPEN = re.compile(r"^[ \t]{0,3}\?\?\?(?:[ \t]+(.*?))?[ \t]*$")
 CLOSE = re.compile(r"^[ \t]{0,3}!!![ \t]*$")
 IMAGE_WIDTH = re.compile(r"!\[([^\]\n]*?)[ \t]*\|[ \t]*(\d+)[ \t]*\]\(([^)\n]*)\)")
+MEDIA = re.compile(
+    r"!\[([^\]\n]*)\]\((?:<([^>\n]+)>|([^\s)\n]+))"
+    r"(?:[ \t]+(?:\"([^\"\n]*)\"|'([^'\n]*)'|\(([^)\n]*)\)))?\)"
+)
+
+
+def _media(line: str) -> str:
+    def sub(m: re.Match) -> str:
+        alt, src = m[1], m[2] or m[3]
+        mime = mimetypes.guess_type(urlsplit(src).path)[0] or ""
+        kind = mime.partition("/")[0]
+        if kind not in ("video", "audio"):
+            return m[0]
+        sized = re.match(r"^(.*?)[ \t]*\|[ \t]*(\d+)[ \t]*$", alt)
+        if sized:
+            alt, width = sized[1], sized[2]
+        else:
+            width = None
+        attrs = [f'src="{html.escape(src, quote=True)}"', "controls"]
+        if alt:
+            attrs.append(f'aria-label="{html.escape(alt, quote=True)}"')
+        title = m[4] or m[5] or m[6]
+        if title:
+            attrs.append(f'title="{html.escape(title, quote=True)}"')
+        if width:
+            attrs.append(f'style="max-width: min({width}px, 100%)"')
+        return f"<{kind} {' '.join(attrs)}></{kind}>"
+    return MEDIA.sub(sub, line)
 
 
 def _image(line: str, pdf: bool) -> str:
@@ -59,7 +91,7 @@ def extend(text: str, target: str) -> str:
             out.extend(_close(pdf))
             depth -= 1
         else:
-            out.append(_image(line, pdf))
+            out.append(_image(_media(line) if not pdf else line, pdf))
         i += 1
     for _ in range(depth):
         out.extend(_close(pdf))
