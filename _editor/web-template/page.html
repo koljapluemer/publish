@@ -19,7 +19,12 @@ h1 { font-size: 2rem; margin-top: 0.5em; }
 header p { color: var(--muted); margin: 0.2em 0; }
 a { color: var(--link); }
 img, video { max-width: 100%; height: auto; }
-video.gif { cursor: pointer; }
+span.gif { position: relative; display: inline-block; max-width: 100%; line-height: 0; cursor: pointer; }
+span.gif video { display: block; max-width: 100%; height: auto; margin: 0; }
+span.gif::after { content: ""; position: absolute; top: 50%; left: 50%; width: 4rem; height: 4rem; translate: -50% -50%; border-radius: 50%; pointer-events: none; transition: opacity 0.15s;
+  background: rgb(0 0 0 / 0.55) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E") center / 55% no-repeat; }
+span.gif.playing::after { opacity: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M6 5h4v14H6zM14 5h4v14h-4z'/%3E%3C/svg%3E"); }
+span.gif.playing:hover::after, span.gif.playing:focus-visible::after { opacity: 1; }
 figure { margin: 1.5em 0; }
 figcaption { color: var(--muted); font-size: 0.9em; }
 pre, code { font: 0.9em ui-monospace, "DejaVu Sans Mono", monospace; background: var(--code); border-radius: 4px; }
@@ -67,16 +72,19 @@ $body$
 })();
 // Muted looping videos marked `{.gif}` toggle playback by click, Space, or Enter.
 (() => {
-  const toggle = (video) => video.paused ? video.play() : video.pause();
+  const toggle = (gif) => { const video = gif.querySelector('video'); video.paused ? video.play() : video.pause(); };
   addEventListener('click', (e) => {
-    const video = e.target.closest?.('video.gif');
-    if (video) toggle(video);
+    const gif = e.target.closest?.('span.gif');
+    if (gif) toggle(gif);
   });
   addEventListener('keydown', (e) => {
-    if ((e.key !== ' ' && e.key !== 'Enter') || !e.target.matches?.('video.gif')) return;
+    if ((e.key !== ' ' && e.key !== 'Enter') || !e.target.matches?.('span.gif')) return;
     e.preventDefault();
     toggle(e.target);
   });
+  for (const type of ['play', 'pause']) addEventListener(type, (e) => {
+    e.target.parentElement?.matches('span.gif') && e.target.parentElement.classList.toggle('playing', type === 'play');
+  }, true);
 })();
 </script>
 </body>

@@ -45,11 +45,11 @@ const renderMedia = (token: MediaToken) => {
   const title = token.title ? ` title="${escapeHtml(token.title)}"` : '';
   const style = width === undefined ? '' : ` style="max-width: min(${width}px, 100%)"`;
   const gif = token.gif && token.mediaKind === 'video';
+  const label = ` aria-label="${escapeHtml(token.text)}"`;
+  const src = escapeHtml(token.href);
+  if (gif) return `<span class="gif" role="button" tabindex="0"${label}${title}${style}><video src="${src}" loop muted playsinline></video></span>`;
   if (token.mediaKind === 'video' || token.mediaKind === 'audio') {
-    const behavior = gif
-      ? ' autoplay loop muted playsinline class="gif" role="button" tabindex="0"'
-      : ' controls';
-    return `<${token.mediaKind} src="${escapeHtml(token.href)}"${behavior} aria-label="${escapeHtml(token.text)}"${title}${style}></${token.mediaKind}>`;
+    return `<${token.mediaKind} src="${src}" controls${label}${title}${style}></${token.mediaKind}>`;
   }
   return width === undefined ? false : `<img src="${escapeHtml(token.href)}" alt="${escapeHtml(token.text)}"${title}${style}>`;
 };

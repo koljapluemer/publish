@@ -39,8 +39,8 @@ def test_video_and_audio_use_image_syntax_on_web_only():
 
 def test_gif_video_attribute():
     out = mdext.extend('![Demo|320](demo.mp4){.gif}', "web")
-    assert '<video src="demo.mp4" autoplay loop muted playsinline class="gif" role="button" tabindex="0"' in out
-    assert 'aria-label="Demo"' in out and 'controls' not in out
+    assert out == ('<span class="gif" role="button" tabindex="0" aria-label="Demo" style="max-width: min(320px, 100%)">'
+                   '<video src="demo.mp4" loop muted playsinline></video></span>')
 
 
 def test_pdf_keeps_content():

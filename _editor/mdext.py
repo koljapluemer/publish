@@ -8,7 +8,9 @@ editor's preview.
 - `![alt|500](src)` shows the image at most 500 px wide.
 - On the web, image syntax targeting video or audio is rendered as the
   corresponding HTML5 media element. The standard MIME registry classifies it.
-- A video followed by `{.gif}` autoplays muted and loops; click toggles playback.
+- A video followed by `{.gif}` is muted and loops, without controls; a click
+  toggles playback, and an overlaid icon shows play while paused and pause on
+  hover while playing.
 
 Lines inside fenced code are left alone.
 """
@@ -43,20 +45,15 @@ def _media(line: str) -> str:
         else:
             width = None
         gif = kind == "video" and bool(m[7])
-        attrs = [f'src="{html.escape(src, quote=True)}"']
-        if gif:
-            attrs.extend(("autoplay", "loop", "muted", "playsinline", 'class="gif"',
-                          'role="button"', 'tabindex="0"'))
-        else:
-            attrs.append("controls")
-        if alt:
-            attrs.append(f'aria-label="{html.escape(alt, quote=True)}"')
+        label = f' aria-label="{html.escape(alt, quote=True)}"' if alt else ""
         title = m[4] or m[5] or m[6]
-        if title:
-            attrs.append(f'title="{html.escape(title, quote=True)}"')
-        if width:
-            attrs.append(f'style="max-width: min({width}px, 100%)"')
-        return f"<{kind} {' '.join(attrs)}></{kind}>"
+        title = f' title="{html.escape(title, quote=True)}"' if title else ""
+        style = f' style="max-width: min({width}px, 100%)"' if width else ""
+        src = html.escape(src, quote=True)
+        if gif:
+            return (f'<span class="gif" role="button" tabindex="0"{label}{title}{style}>'
+                    f'<video src="{src}" loop muted playsinline></video></span>')
+        return f'<{kind} src="{src}" controls{label}{title}{style}></{kind}>'
     return MEDIA.sub(sub, line)
 
 

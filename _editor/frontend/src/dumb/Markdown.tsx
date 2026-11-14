@@ -64,18 +64,33 @@ export function Markdown({ source, className = '', fences, base = '', files = []
   useEffect(() => {
     const el = box.current;
     if (!el) return;
-    const gif = (e: Event) => (e.target instanceof Element ? e.target.closest<HTMLVideoElement>('video.gif') : null);
-    const toggle = (video: HTMLVideoElement) => (video.paused ? void video.play() : video.pause());
-    const click = (e: MouseEvent) => { const video = gif(e); if (video) toggle(video); };
+    const gif = (e: Event) => (e.target instanceof Element ? e.target.closest<HTMLElement>('span.gif') : null);
+    const toggle = (gif: HTMLElement) => {
+      const video = gif.querySelector('video');
+      if (video) void (video.paused ? video.play() : video.pause());
+    };
+    const click = (e: MouseEvent) => { const target = gif(e); if (target) toggle(target); };
     const keydown = (e: KeyboardEvent) => {
-      const video = gif(e);
-      if (!video || (e.key !== ' ' && e.key !== 'Enter')) return;
+      const target = gif(e);
+      if (!target || (e.key !== ' ' && e.key !== 'Enter')) return;
       e.preventDefault();
-      toggle(video);
+      toggle(target);
+    };
+    // media events don't bubble, so they are caught on the way down
+    const playing = (e: Event) => {
+      const parent = e.target instanceof HTMLVideoElement ? e.target.parentElement : null;
+      if (parent?.matches('span.gif')) parent.classList.toggle('playing', e.type === 'play');
     };
     el.addEventListener('click', click);
     el.addEventListener('keydown', keydown);
-    return () => { el.removeEventListener('click', click); el.removeEventListener('keydown', keydown); };
+    el.addEventListener('play', playing, true);
+    el.addEventListener('pause', playing, true);
+    return () => {
+      el.removeEventListener('click', click);
+      el.removeEventListener('keydown', keydown);
+      el.removeEventListener('play', playing, true);
+      el.removeEventListener('pause', playing, true);
+    };
   }, []);
 
   const counts: Record<string, number> = {};

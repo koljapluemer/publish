@@ -8,6 +8,14 @@
 .prose .katex-display { overflow-x: auto; overflow-y: hidden; padding-block: 0.2em; }
 .prose pre code.hljs { padding: 0; background: transparent; }
 
+/* gif-style videos: keep in sync with web-template/page.html */
+span.gif { position: relative; display: inline-block; max-width: 100%; line-height: 0; cursor: pointer; }
+span.gif video { display: block; max-width: 100%; height: auto; margin: 0; }
+span.gif::after { content: ""; position: absolute; top: 50%; left: 50%; width: 4rem; height: 4rem; translate: -50% -50%; border-radius: 50%; pointer-events: none; transition: opacity 0.15s;
+  background: rgb(0 0 0 / 0.55) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M8 5v14l11-7z'/%3E%3C/svg%3E") center / 55% no-repeat; }
+span.gif.playing::after { opacity: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M6 5h4v14H6zM14 5h4v14h-4z'/%3E%3C/svg%3E"); }
+span.gif.playing:hover::after, span.gif.playing:focus-visible::after { opacity: 1; }
+
 /* `???` … `!!!` sections in the preview (see dumb/mdext.ts) */
 .prose details { margin: 1em 0; padding: 0.4em 0.8em; border: 1px solid var(--color-base-300); border-radius: 6px; }
 .prose summary { cursor: pointer; opacity: 0.7; }

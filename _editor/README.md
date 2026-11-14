@@ -89,8 +89,10 @@ Anything, viz blocks included; collapsed by default.
 - `|500` at the end of an image's alt text shows it at most 500 px wide (and
   never wider than the page). A PDF sets that width.
 - In the preview and web page, image syntax for a video or audio file produces
-  a native player. Add `{.gif}` to a video to make it autoplay muted, loop,
-  and toggle play/pause when clicked or activated with Space or Enter.
+  a native player. Add `{.gif}` to a video to make it muted and looping,
+  without controls: it waits for a click (or Space/Enter) to play, and toggles
+  play/pause the same way. A play icon shows while paused, a pause icon on
+  hover while playing.
 
 `mdext.py` rewrites them to plain pandoc Markdown for the web page and the PDF;
 `frontend/src/dumb/mdext.ts` mirrors it for the preview.

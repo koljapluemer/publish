@@ -30,7 +30,6 @@ First, here are the full controls:
 You can move around by walking/moving your head. This is usually called _Natural Walking_ in the literature; quite obviously best when you have lots of space, but also doesn't work with stairs etc. Allow me to demonstrate:
 
 ![](mov.mp4){.gif}
-_Click on the video to stop it playing._
 
 
 You can also teleport by pushing the right thumbstick forward, optionally rotating it (to adjust your target rotation), then letting go. This is very standard stuff, I basically stole the UX flow from the Meta Kit (c.f. [this tutorial](https://www.youtube.com/watch?v=a3ojjAIZCmk)). 
