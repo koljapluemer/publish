@@ -36,6 +36,8 @@ You can also teleport by pushing the right thumbstick forward, optionally rotati
 
 Teleporting this way may take a bit of time to learn how to use it at first; which may be a problem with non-technical users (has to be user-tested). Because teleportation doesn't accelerate or move the user, it reduces cybersickness, but the dicontinuous motion may reduce immersion or spatial understanding, [here](https://www.nature.com/articles/s41598-025-12143-y.pdf) is a decent paper discussing this. This may also be a problem (given that the whole point is spatial understanding of a e.g. a given building), but I'm not sure that we have a reasonable alternative, because continuous joystick movement in a tight virtual space (=house) really does make you rather nauseous.
 
+## Tech Stuff
+
 
 ## Technical Decisions
 
