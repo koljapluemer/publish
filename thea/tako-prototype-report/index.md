@@ -23,6 +23,7 @@ _the Meta Quest only records the video of one eye, that's why the view looks so 
 
 First, here are the full controls:
 
+![](controls.png)
 
 ### Movement
 
@@ -38,6 +39,8 @@ Teleporting this way may take a bit of time to learn how to use it at first; whi
 
 ## Tech Stuff
 
+- The algorithm that choses the teleport points in the mini-building is mathematically interesting: It first heuristically finds intersections and unique elements from the BIM ontology, then runs a declustering algorithm to spread them evenly. I really just vibecoded it though.
+- How to make the agentic flow fast, cheap and effective is a really interesting question of applied AI engineering (spans RAG, model choice, tool design, prompt engineering, agentic loops, ...). We could use someone with expertise in this field. 
 
 ## Technical Decisions
 

@@ -5,6 +5,7 @@ import { lintGutter } from '@codemirror/lint';
 import { typst_lezer } from 'codemirror-lang-typst/lezer';
 import { api } from '@/api';
 import { CodeMirrorHost } from '@/dumb/CodeMirrorHost';
+import { useDocFavicon } from '@/dumb/favicon';
 import { showError } from '@/dumb/notice';
 import type { ViewProps } from './registry';
 
@@ -53,6 +54,7 @@ function LoadedTypst({ doc, saved, initialRender, onSaved, onDirty }: {
   const savedRef = useRef(saved);
   draftRef.current = draft;
   const dirty = draft !== saved;
+  useDocFavicon(draft, 'typst');
   const statusKey = ['typst-status', doc];
   const status = useQuery({
     queryKey: statusKey,

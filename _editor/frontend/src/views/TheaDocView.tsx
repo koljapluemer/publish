@@ -4,6 +4,7 @@ import type { EditorView } from '@codemirror/view';
 import { Paperclip, WandSparkles } from 'lucide-react';
 import { api } from '@/api';
 import { CodeMirrorHost } from '@/dumb/CodeMirrorHost';
+import { useDocFavicon } from '@/dumb/favicon';
 import { Markdown, type FenceRenderer } from '@/dumb/Markdown';
 import { showError } from '@/dumb/notice';
 import { insertViz, theaBlocks, withNewName, type TheaBlock as Block } from '@/thea/thea';
@@ -60,6 +61,7 @@ function LoadedEditor({ doc, saved, onSaved, onDirty }: { doc: string; saved: st
   const editor = useRef<EditorView | null>(null);
   const dirty = draft !== saved;
   const blocks = useMemo(() => theaBlocks(draft), [draft]);
+  useDocFavicon(draft, 'markdown');
 
   useEffect(() => onDirty(dirty), [dirty, onDirty]);
   useEffect(() => {
