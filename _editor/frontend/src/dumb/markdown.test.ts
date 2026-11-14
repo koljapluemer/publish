@@ -27,4 +27,10 @@ describe('Markdown preview', () => {
     expect(html).toContain('<audio src="/files/voice.mp3" controls="" aria-label="Narration"></audio>');
     expect(html).toContain('<img src="/files/photo.jpg" alt="Photo">');
   });
+
+  it('renders the gif attribute as a muted looping autoplay video', () => {
+    const html = slotted('![Demo|320](demo.mp4){.gif}', [], '/files/', { 'demo.mp4': 'video/mp4' });
+    expect(html).toContain('<video src="/files/demo.mp4" autoplay="" loop="" muted="" playsinline="" class="gif" role="button" tabindex="0" aria-label="Demo" style="max-width: min(320px, 100%)"></video>');
+    expect(html).not.toContain('controls');
+  });
 });

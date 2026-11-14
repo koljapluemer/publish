@@ -137,6 +137,14 @@ def test_renders_and_copies_video_and_audio_from_image_syntax(tmp_path):
     assert (tmp_path / "_site/doc/voice.mp3").read_bytes() == b"audio"
 
 
+def test_gif_style_video_is_interactive_in_export(tmp_path):
+    source = _doc(tmp_path, "target: web", '![Demo](demo.mp4){.gif}\n')
+    (source.parent / "demo.mp4").write_bytes(b"video")
+    page = web.render_if_targeted(source, tmp_path).read_text(encoding="utf-8")
+    assert '<video src="demo.mp4" autoplay loop muted playsinline class="gif" role="button" tabindex="0"' in page
+    assert "video.gif" in page and "video.play()" in page
+
+
 def test_changed_file_makes_page_stale(tmp_path):
     source = _doc(tmp_path, "target: web", "![](photo.jpg)\n")
     photo = source.parent / "photo.jpg"

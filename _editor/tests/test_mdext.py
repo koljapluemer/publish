@@ -37,6 +37,12 @@ def test_video_and_audio_use_image_syntax_on_web_only():
     assert mdext.extend('![Demo](demo.mp4)', "pdf") == '![Demo](demo.mp4)'
 
 
+def test_gif_video_attribute():
+    out = mdext.extend('![Demo|320](demo.mp4){.gif}', "web")
+    assert '<video src="demo.mp4" autoplay loop muted playsinline class="gif" role="button" tabindex="0"' in out
+    assert 'aria-label="Demo"' in out and 'controls' not in out
+
+
 def test_pdf_keeps_content():
     out = pypandoc.convert_text(mdext.extend("??? Label\ninner\n!!!", "pdf"), "typst", format="markdown")
     assert "#strong[Label]" in out and "inner" in out and "details" not in out

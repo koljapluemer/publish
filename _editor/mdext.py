@@ -8,6 +8,7 @@ editor's preview.
 - `![alt|500](src)` shows the image at most 500 px wide.
 - On the web, image syntax targeting video or audio is rendered as the
   corresponding HTML5 media element. The standard MIME registry classifies it.
+- A video followed by `{.gif}` autoplays muted and loops; click toggles playback.
 
 Lines inside fenced code are left alone.
 """
@@ -25,6 +26,7 @@ IMAGE_WIDTH = re.compile(r"!\[([^\]\n]*?)[ \t]*\|[ \t]*(\d+)[ \t]*\]\(([^)\n]*)\
 MEDIA = re.compile(
     r"!\[([^\]\n]*)\]\((?:<([^>\n]+)>|([^\s)\n]+))"
     r"(?:[ \t]+(?:\"([^\"\n]*)\"|'([^'\n]*)'|\(([^)\n]*)\)))?\)"
+    r"(?:(\{[ \t]*\.gif[ \t]*\}))?"
 )
 
 
@@ -40,7 +42,13 @@ def _media(line: str) -> str:
             alt, width = sized[1], sized[2]
         else:
             width = None
-        attrs = [f'src="{html.escape(src, quote=True)}"', "controls"]
+        gif = kind == "video" and bool(m[7])
+        attrs = [f'src="{html.escape(src, quote=True)}"']
+        if gif:
+            attrs.extend(("autoplay", "loop", "muted", "playsinline", 'class="gif"',
+                          'role="button"', 'tabindex="0"'))
+        else:
+            attrs.append("controls")
         if alt:
             attrs.append(f'aria-label="{html.escape(alt, quote=True)}"')
         title = m[4] or m[5] or m[6]

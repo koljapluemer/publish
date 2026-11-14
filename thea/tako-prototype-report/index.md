@@ -11,6 +11,13 @@ _If you don't have the password, ask me (Kolja Sam)_.
 Here is a demo of me using voice to add a window to a wall:
 
 ![](quick_demo.mp4)
+_the Meta Quest only records the video of one eye, that's why the view looks so narrow and stuff is sometimes out of frame. Sorry for that._
+
+## Goals
+
+1. Allow building engineers to quickly prototype/iterate their designs
+2. ~~Allow professors to review student submissions of BIM files~~ (goal for a later version)
+
 
 ## UX Stuff
 
@@ -21,7 +28,8 @@ First, here are the full controls:
 
 You can move around by walking/moving your head. This is usually called _Natural Walking_ in the literature; quite obviously best when you have lots of space, but also doesn't work with stairs etc. Allow me to demonstrate:
 
-![](mov.mp4)
+![](mov.mp4){.gif}
+_Click on the video to stop it playing._
 
 
 You can also teleport by pushing the right thumbstick forward, optionally rotating it (to adjust your target rotation), then letting go. This is very standard stuff, I basically stole the UX flow from the Meta Kit (c.f. [this tutorial](https://www.youtube.com/watch?v=a3ojjAIZCmk)). 

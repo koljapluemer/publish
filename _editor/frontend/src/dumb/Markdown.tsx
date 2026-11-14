@@ -28,6 +28,22 @@ export function Markdown({ source, className = '', fences, base = '', files = []
   useLayoutEffect(() => {
     setSlots(kinds.length && box.current ? [...box.current.querySelectorAll<HTMLElement>('[data-fence]')] : []);
   }, [html, kinds]);
+  useLayoutEffect(() => {
+    const videos = [...(box.current?.querySelectorAll<HTMLVideoElement>('video.gif') ?? [])];
+    const toggle = (video: HTMLVideoElement) => video.paused ? void video.play() : video.pause();
+    const cleanups = videos.map((video) => {
+      const click = () => toggle(video);
+      const keydown = (e: KeyboardEvent) => {
+        if (e.key !== ' ' && e.key !== 'Enter') return;
+        e.preventDefault();
+        toggle(video);
+      };
+      video.addEventListener('click', click);
+      video.addEventListener('keydown', keydown);
+      return () => { video.removeEventListener('click', click); video.removeEventListener('keydown', keydown); };
+    });
+    return () => cleanups.forEach((cleanup) => cleanup());
+  }, [html]);
 
   const counts: Record<string, number> = {};
   return (

@@ -68,8 +68,7 @@ block was removed or renamed stays on disk until you delete it.
 
 ## Markdown extensions
 
-Every renderer (the preview, the web page and the PDF) understands two
-additions to Markdown:
+The renderers understand these additions to Markdown:
 
 ```
 ??? Optional label
@@ -77,6 +76,10 @@ Anything, viz blocks included; collapsed by default.
 !!!
 
 ![original|500](original.jpg)
+
+![Demo](demo.mp4)
+
+![Looping demo](demo.mp4){.gif}
 ```
 
 - A line `???` opens a collapsed section, a line `!!!` closes it. The text
@@ -85,6 +88,9 @@ Anything, viz blocks included; collapsed by default.
   shows the content, with the label as a bold line.
 - `|500` at the end of an image's alt text shows it at most 500 px wide (and
   never wider than the page). A PDF sets that width.
+- In the preview and web page, image syntax for a video or audio file produces
+  a native player. Add `{.gif}` to a video to make it autoplay muted, loop,
+  and toggle play/pause when clicked or activated with Space or Enter.
 
 `mdext.py` rewrites them to plain pandoc Markdown for the web page and the PDF;
 `frontend/src/dumb/mdext.ts` mirrors it for the preview.

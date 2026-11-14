@@ -19,6 +19,7 @@ h1 { font-size: 2rem; margin-top: 0.5em; }
 header p { color: var(--muted); margin: 0.2em 0; }
 a { color: var(--link); }
 img, video { max-width: 100%; height: auto; }
+video.gif { cursor: pointer; }
 figure { margin: 1.5em 0; }
 figcaption { color: var(--muted); font-size: 0.9em; }
 pre, code { font: 0.9em ui-monospace, "DejaVu Sans Mono", monospace; background: var(--code); border-radius: 4px; }
@@ -63,6 +64,19 @@ $body$
   });
   for (const f of frames()) f.addEventListener('load', () => theme(f));
   dark.addEventListener('change', () => frames().forEach(theme));
+})();
+// Muted looping videos marked `{.gif}` toggle playback by click, Space, or Enter.
+(() => {
+  const toggle = (video) => video.paused ? video.play() : video.pause();
+  addEventListener('click', (e) => {
+    const video = e.target.closest?.('video.gif');
+    if (video) toggle(video);
+  });
+  addEventListener('keydown', (e) => {
+    if ((e.key !== ' ' && e.key !== 'Enter') || !e.target.matches?.('video.gif')) return;
+    e.preventDefault();
+    toggle(e.target);
+  });
 })();
 </script>
 </body>
