@@ -26,6 +26,14 @@ Make the kernel 1px wide and tall.
 Show only one visualization row: og image, compressed image, and heatmap demonstrating the read difference, then a column where we continously show the extracted square errors. At the bottom of that column, show the current Mean Square Error. Do not add other stuff, values or formulas, except the controls for the following:
 Allow user to set kernel speed and to start/stop/reset the animation.
 ```
+
+??? Mean Square Error (MSE)
+
+```thea kind-spruce
+Make an interactive visualization of the Mean Square Error, use 3 points lying distributed around the correct graph line, movable, and show the spanned square. Show just the coordinate system & graph, no extra formula, explanation or instructions outside of it.
+```
+
+!!!
 !!!
 
 
@@ -44,31 +52,7 @@ for row in rows:
 mean_square_error = error_sum / nr_of_pixels
 ```
 
-??? Python
 
-_(hier einmal in executable)_
-```
-from math import log10
-
-
-def psnr(original_image, compressed_image, max_pixel=255):
-    error_sum = 0
-    nr_of_pixels = 0
-
-    for original_row, compressed_row in zip(original_image, compressed_image, strict=True):
-        for original, compressed in zip(original_row, compressed_row, strict=True):
-            error_sum += (float(original) - float(compressed)) ** 2
-            nr_of_pixels += 1
-
-    mean_square_error = error_sum / nr_of_pixels
-    if mean_square_error == 0:
-        return float("inf")
-    return 10 * log10(max_pixel**2 / mean_square_error)
-
-
-print(psnr([[0, 100], [200, 255]], [[0, 105], [195, 255]]))
-```
-!!!
 
 Diesen extrem simplen Code können wir auch als sehr nervige Formel ausdrücken:
 
@@ -97,6 +81,32 @@ $$\mathrm{PSNR} = 10\log_{10}\!\left(\frac{\mathrm{MAX}_I^2}{\mathrm{MSE}}\right
 | 10,000 | 40 |
 | 100,000 | 50 |
 
+
+??? Python
+
+
+```
+from math import log10
+
+
+def psnr(original_image, compressed_image, max_pixel=255):
+    error_sum = 0
+    nr_of_pixels = 0
+
+    for original_row, compressed_row in zip(original_image, compressed_image, strict=True):
+        for original, compressed in zip(original_row, compressed_row, strict=True):
+            error_sum += (float(original) - float(compressed)) ** 2
+            nr_of_pixels += 1
+
+    mean_square_error = error_sum / nr_of_pixels
+    if mean_square_error == 0:
+        return float("inf")
+    return 10 * log10(max_pixel**2 / mean_square_error)
+
+
+print(psnr([[0, 100], [200, 255]], [[0, 105], [195, 255]]))
+```
+!!!
 
 !!!
 

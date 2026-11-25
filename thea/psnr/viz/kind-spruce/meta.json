@@ -1,0 +1,9 @@
+{
+  "spec": "Make an interactive visualization of the Mean Square Error, use 3 points lying distributed around the correct graph line, movable, and show the spanned square. Show just the coordinate system & graph, no extra formula, explanation or instructions outside of it.",
+  "model": null,
+  "created": "2026-11-25T12:51:45+0100",
+  "cost_usd": 0.2663,
+  "turns": 18,
+  "session": "1294dc5a-ba27-4220-ad5b-cd205fadb1cb",
+  "generator": "publish-thea-2"
+}

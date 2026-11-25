@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script data-thea-bridge>(() => {
+  const post = (m) => { if (parent !== window) parent.postMessage({ source: 'thea', ...m }, '*'); };
+  const apply = (mode) => { document.documentElement.dataset.theme = mode; document.documentElement.style.colorScheme = mode; };
+  apply(matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  addEventListener('message', (e) => { if (e.source === parent && e.data && e.data.type === 'theme') apply(e.data.mode === 'dark' ? 'dark' : 'light'); });
+  addEventListener('error', (e) => post({ type: 'error', message: String(e.message || e.error) }));
+  addEventListener('unhandledrejection', (e) => post({ type: 'error', message: String((e.reason && e.reason.message) || e.reason) }));
+  const size = () => post({ type: 'resize', height: Math.ceil(document.documentElement.getBoundingClientRect().height) });
+  addEventListener('DOMContentLoaded', () => { new ResizeObserver(size).observe(document.documentElement); size(); });
+})();</script>
+<style>html, body { margin: 0; }
+:root { --viz-bg: transparent; --viz-surface: #f4f4f5; --viz-fg: #18181b; --viz-muted: #71717a; --viz-border: #e4e4e7;
+  --viz-accent: #2563eb; --viz-series: #2563eb, #ea580c, #16a34a, #9333ea, #db2777, #0891b2;
+  --viz-font: system-ui, "Noto Sans", "DejaVu Sans", sans-serif; --viz-mono: ui-monospace, "DejaVu Sans Mono", monospace;
+  color: var(--viz-fg); background: var(--viz-bg); font: 15px/1.5 var(--viz-font); }
+:root[data-theme="dark"] { --viz-surface: #27272a; --viz-fg: #f4f4f5; --viz-muted: #a1a1aa; --viz-border: #3f3f46;
+  --viz-accent: #60a5fa; --viz-series: #60a5fa, #fb923c, #4ade80, #c084fc, #f472b6, #22d3ee; }</style>
+<style>.mse{--c0: #2563eb;--c1: #ea580c;--c2: #16a34a;max-width:760px;margin:0 auto;padding:4px 0;font-family:var(--viz-font);color:var(--viz-fg)}:root[data-theme=dark] .mse{--c0: #60a5fa;--c1: #fb923c;--c2: #4ade80}.plot-wrap{width:100%}#plot{display:block;width:100%;height:auto;overflow:visible;touch-action:none;user-select:none}.grid line{stroke:var(--viz-border);stroke-width:1}.axis line,.axis path{stroke:var(--viz-muted);stroke-width:1}.tick{fill:var(--viz-muted);font:11px var(--viz-mono)}.axis-label{fill:var(--viz-muted);font:italic 13px var(--viz-font)}.truth{stroke:var(--viz-fg);stroke-width:2.5;stroke-linecap:round}.sq{fill-opacity:.18;stroke-width:1.5;transition:fill-opacity .15s}.residual{stroke-width:2;stroke-dasharray:4 3}.side-label{font:600 12px var(--viz-mono)}.pt{cursor:grab;outline:none}.pt .halo{fill:transparent}.pt .dot{stroke:var(--viz-surface);stroke-width:2.5;transition:r .12s}.pt:hover .dot,.pt:focus-visible .dot,.pt.drag .dot{r:9}.pt:focus-visible .ring{stroke-opacity:1}.pt .ring{fill:none;stroke-width:2;stroke-opacity:0}.pt.drag{cursor:grabbing}.g-active .sq{fill-opacity:.32}
+</style>
+</head>
+<body>
+<div id="app" class="mse">
+  <div class="plot-wrap">
+    <svg id="plot" role="img" aria-label="Three draggable points around the line y = 0.5x + 1, each with a square whose side is its vertical error"></svg>
+  </div>
+</div>
+
+<script>"use strict";(()=>{var I="http://www.w3.org/2000/svg",f=10,p=7,K=.5,N=1,L=e=>K*e+N,D=[{x:2,y:3.2},{x:5,y:2.4},{x:8,y:5.8}],b=D.map(e=>({...e})),P=["var(--c0)","var(--c1)","var(--c2)"],v=document.getElementById("plot"),z=v.parentElement,y={l:34,r:12,t:12,b:34},m=50,C=-1,M=-1,r=(e,n,t)=>{let s=document.createElementNS(I,e);for(let[l,a]of Object.entries(n))s.setAttribute(l,String(a));return t&&t.appendChild(s),s},c=e=>y.l+e*m,i=e=>y.t+(p-e)*m,G=(e,n,t)=>Math.min(t,Math.max(n,e)),w=e=>e.toFixed(2),S=null,A=[];function T(){let e=Math.max(280,z.clientWidth);m=(e-y.l-y.r)/f;let n=y.t+y.b+m*p;v.setAttribute("viewBox",`0 0 ${e} ${n}`),v.setAttribute("width",String(e)),v.setAttribute("height",String(n)),v.replaceChildren(),A.length=0;let t=r("defs",{},v),s=r("clipPath",{id:"plot-clip"},t);r("rect",{x:y.l,y:y.t,width:m*f,height:m*p},s);let l=m<34?2:1,a=r("g",{class:"grid"},v);for(let o=0;o<=f;o++)r("line",{x1:c(o),x2:c(o),y1:i(0),y2:i(p)},a);for(let o=0;o<=p;o++)r("line",{x1:c(0),x2:c(f),y1:i(o),y2:i(o)},a);let d=r("g",{class:"axis"},v);r("line",{x1:c(0),x2:c(f),y1:i(0),y2:i(0)},d),r("line",{x1:c(0),x2:c(0),y1:i(0),y2:i(p)},d);for(let o=0;o<=f;o+=l){let x=r("text",{class:"tick",x:c(o),y:i(0)+16,"text-anchor":"middle"},d);x.textContent=String(o)}for(let o=l;o<p;o+=l){let x=r("text",{class:"tick",x:c(0)-7,y:i(o)+4,"text-anchor":"end"},d);x.textContent=String(o)}r("text",{class:"axis-label",x:c(f),y:i(0)+30,"text-anchor":"end"},d).textContent="x",r("text",{class:"axis-label",x:10,y:i(p)+4},d).textContent="y";let h=r("g",{"clip-path":"url(#plot-clip)"},v);r("line",{class:"truth",x1:c(0),y1:i(L(0)),x2:c(f),y2:i(L(f))},v);let g=r("g",{},v);b.forEach((o,x)=>{let u=r("g",{class:"pt",tabindex:0,role:"slider","aria-label":`Point ${x+1}`},g);r("circle",{class:"halo",r:22},u),r("circle",{class:"ring",r:13,stroke:P[x]},u),r("circle",{class:"dot",r:7,fill:P[x]},u),u.addEventListener("pointerdown",E=>O(E,x)),u.addEventListener("keydown",E=>X(E,x)),u.addEventListener("focus",()=>k(x)),u.addEventListener("blur",()=>k(-1)),u.addEventListener("pointerenter",()=>k(x)),u.addEventListener("pointerleave",()=>{C!==x&&k(-1)}),A.push(u)}),S={squares:h,points:g},R()}function k(e){if(M=e,S)for(let[n,t]of Array.from(S.squares.children).entries())t.classList.toggle("g-active",n===M)}function R(){if(!S)return;let{squares:e}=S;e.replaceChildren();let n=b.map(t=>t.y-L(t.x));b.forEach((t,s)=>{let l=n[s],a=Math.abs(l),d=r("g",{},e);s===M&&d.classList.add("g-active");let h=P[s],g=t.x+a<=f||t.x-a<0?1:-1,o=g===1?t.x:t.x-a,x=Math.max(t.y,L(t.x));if(r("rect",{class:"sq",x:c(o),y:i(x),width:a*m,height:a*m,fill:h,stroke:h},d),r("line",{class:"residual",x1:c(t.x),y1:i(t.y),x2:c(t.x),y2:i(L(t.x)),stroke:h},d),a*m>34){let u=l>0,E=r("text",{class:"side-label",fill:h,"text-anchor":g===1?"start":"end",x:c(t.x)+g*6,y:u?i(t.y)+15:i(t.y)-6},d);E.textContent=w(l*l)}}),b.forEach((t,s)=>{let l=A[s];l.setAttribute("transform",`translate(${c(t.x)} ${i(t.y)})`),l.setAttribute("aria-valuetext",`x ${w(t.x)}, y ${w(t.y)}, error ${w(n[s])}, squared error ${w(n[s]**2)}`)})}function $(e){let n=v.getBoundingClientRect(),t=e.clientX-n.left,s=e.clientY-n.top;return{x:(t-y.l)/m,y:p-(s-y.t)/m}}function V(e,n,t){b[e]={x:G(n,.2,f-.2),y:G(t,.1,p-.1)},R()}function O(e,n){e.preventDefault();let t=A[n],s=$(e),l={x:b[n].x-s.x,y:b[n].y-s.y};C=n,k(n),t.classList.add("drag"),t.setPointerCapture(e.pointerId),t.focus({preventScroll:!0});let a=h=>{let g=$(h);V(n,g.x+l.x,g.y+l.y)},d=()=>{C=-1,t.classList.remove("drag"),t.removeEventListener("pointermove",a),t.removeEventListener("pointerup",d),t.removeEventListener("pointercancel",d)};t.addEventListener("pointermove",a),t.addEventListener("pointerup",d),t.addEventListener("pointercancel",d)}function X(e,n){let t=e.shiftKey?.5:.1,s=b[n],a={ArrowLeft:[-t,0],ArrowRight:[t,0],ArrowUp:[0,t],ArrowDown:[0,-t]}[e.key];a&&(e.preventDefault(),V(n,s.x+a[0],s.y+a[1]))}var q=-1;new ResizeObserver(()=>{let e=z.clientWidth;e!==q&&(q=e,T())}).observe(z);T();})();
+</script>
+</body>
+</html>

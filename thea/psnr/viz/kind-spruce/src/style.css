@@ -1,0 +1,35 @@
+.mse {
+  --c0: #2563eb;
+  --c1: #ea580c;
+  --c2: #16a34a;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 4px 0;
+  font-family: var(--viz-font);
+  color: var(--viz-fg);
+}
+:root[data-theme="dark"] .mse {
+  --c0: #60a5fa;
+  --c1: #fb923c;
+  --c2: #4ade80;
+}
+.plot-wrap { width: 100%; }
+#plot { display: block; width: 100%; height: auto; overflow: visible; touch-action: none; user-select: none; }
+
+.grid line { stroke: var(--viz-border); stroke-width: 1; }
+.axis line, .axis path { stroke: var(--viz-muted); stroke-width: 1; }
+.tick { fill: var(--viz-muted); font: 11px var(--viz-mono); }
+.axis-label { fill: var(--viz-muted); font: italic 13px var(--viz-font); }
+.truth { stroke: var(--viz-fg); stroke-width: 2.5; stroke-linecap: round; }
+
+.sq { fill-opacity: 0.18; stroke-width: 1.5; transition: fill-opacity 0.15s; }
+.residual { stroke-width: 2; stroke-dasharray: 4 3; }
+.side-label { font: 600 12px var(--viz-mono); }
+.pt { cursor: grab; outline: none; }
+.pt .halo { fill: transparent; }
+.pt .dot { stroke: var(--viz-surface); stroke-width: 2.5; transition: r 0.12s; }
+.pt:hover .dot, .pt:focus-visible .dot, .pt.drag .dot { r: 9; }
+.pt:focus-visible .ring { stroke-opacity: 1; }
+.pt .ring { fill: none; stroke-width: 2; stroke-opacity: 0; }
+.pt.drag { cursor: grabbing; }
+.g-active .sq { fill-opacity: 0.32; }
